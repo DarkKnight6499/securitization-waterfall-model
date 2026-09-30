@@ -95,7 +95,7 @@ def main() -> dict:
         "base_summary": by_name["Base"]["summary"], "breakeven_cdr": {str(k): v for k, v in be.items()},
         "fair_values": fv, "retention": {o: {k: v for k, v in am["options"][o].items()} for o in OPTIONS},
         "retention_extra": am["extra"], "checks_all_passed": all(c["passed"] for c in checks.values()),
-        "charts": [str(paydown), str(loss_chart), str(be_chart)],
+        "charts": [p.name for p in (paydown, loss_chart, be_chart)],
     }
     (OUTPUT_DIR / "headline.json").write_text(json.dumps(headline, indent=2, default=float))
     print("checks passed in all scenarios:", headline["checks_all_passed"])

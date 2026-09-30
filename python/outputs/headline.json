@@ -157,8 +157,8 @@
   },
   "checks_all_passed": true,
   "charts": [
-    "D:\\Code\\securitization-waterfall-model\\python\\outputs\\charts\\tranche_balance_paydown.png",
-    "D:\\Code\\securitization-waterfall-model\\python\\outputs\\charts\\cumulative_loss_vs_subordination.png",
-    "D:\\Code\\securitization-waterfall-model\\python\\outputs\\charts\\breakeven_cdr_by_tranche.png"
+    "tranche_balance_paydown.png",
+    "cumulative_loss_vs_subordination.png",
+    "breakeven_cdr_by_tranche.png"
   ]
 }
