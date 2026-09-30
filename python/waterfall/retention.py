@@ -3,7 +3,7 @@
 Sources (text read from primary sources, see README):
   US: 17 CFR 246.2 (definitions of eligible vertical / horizontal residual interest),
       246.3 (base requirement), 246.4(a)(1)-(4) (5 percent options, fair value basis for horizontal),
-      246.4(b) (eligible horizontal cash reserve account), 246.12 (hedging and transfer limits).
+      246.4(b) (eligible horizontal cash reserve account), 246.12(a),(b),(e) (transfer, hedging, full-recourse financing).
   EU: Regulation (EU) 2017/2402 Article 6(1) (5 percent net economic interest, measured at origination)
       and Article 6(3)(a) to (e) (permitted retention forms), consolidated text of 09.04.2021.
 """
@@ -101,7 +101,11 @@ def retained_cash_flows(res: dict, fractions: dict) -> np.ndarray:
 
 
 def financing_view(res: dict, fractions: dict) -> dict:
-    """Advance against the retained interest, repaid by sweeping all retained cash flows."""
+    """Advance against the retained interest, repaid by sweeping all retained cash flows.
+
+    17 CFR 246.12(e) allows pledging a retained ABS interest only under an obligation with full
+    recourse to the sponsor, so any unpaid balance at the horizon is a recourse claim, not a loss to the lender.
+    """
     deal = res["deal"]
     cf = retained_cash_flows(res, fractions)
     cost = -cf[0]

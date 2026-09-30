@@ -83,8 +83,10 @@ def principal_window(principal: np.ndarray):
 def tranche_loss(res: dict, tranche: str) -> float:
     """Note loss is the cumulative write-down; residual loss is capital not returned."""
     if tranche == "R":
-        return max(0.0, res["deal"].par("R") - float(tranche_cash_flows(res, "R")["total"][1:].sum()))
-    return float(res[C.tr(tranche, C.WD)].sum())
+        loss = max(0.0, res["deal"].par("R") - float(tranche_cash_flows(res, "R")["total"][1:].sum()))
+    else:
+        loss = float(res[C.tr(tranche, C.WD)].sum())
+    return loss if loss > 1e-6 else 0.0  # float dust from the deficiency calculation
 
 
 def tranche_summary(res: dict) -> dict:

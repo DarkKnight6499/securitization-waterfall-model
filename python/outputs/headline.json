@@ -6,14 +6,14 @@
       "original_balance": 300000000.0,
       "interest_paid": 24207652.154798143,
       "principal_paid": 300000000.0,
-      "writedown": 3.400639773571959e-10,
+      "writedown": 0.0,
       "ending_balance": 0.0,
       "wal_years": 1.6180314712922812,
       "yield_at_par": 0.0499581154098796,
       "discount_margin": 0.011000000000000048,
       "window_first": 1,
       "window_last": 42,
-      "loss_pct": 1.133546591190653e-18,
+      "loss_pct": 0.0,
       "takes_loss": false
     },
     "B": {

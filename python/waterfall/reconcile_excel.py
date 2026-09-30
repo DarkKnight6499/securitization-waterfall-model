@@ -21,7 +21,7 @@ from .retention import OPTIONS, fair_values, retention_amounts, retention_report
 from .scenarios import breakeven_cdr
 from .waterfall import run_waterfall
 
-# ---- tolerances, stated in the README ----
+# Tolerances, stated in the README
 TOL_USD = 0.01  # absolute, per cash flow cell and per dollar total
 TOL_RATE = 1e-6  # absolute, for WAL (years) and annualized yields
 TOL_LEVERED = 1e-5  # levered IRR is more sensitive to the IRR solver
@@ -69,7 +69,7 @@ def recalc(src: Path, outdir: Path) -> Path:
     exe = find_soffice()
     outdir.mkdir(parents=True, exist_ok=True)
     for attempt in range(3):  # LibreOffice occasionally fails right after a previous headless run
-        proc = subprocess.run([exe, "--headless", "--convert-to", "xlsx", "--outdir", str(outdir), str(src)],
+        proc = subprocess.run([exe, "-headless", "-convert-to", "xlsx", "-outdir", str(outdir), str(src)],
                               capture_output=True, timeout=180)
         if proc.returncode == 0 and (outdir / src.name).exists():
             return outdir / src.name

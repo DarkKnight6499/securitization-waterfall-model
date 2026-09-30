@@ -3,6 +3,9 @@
 Every calculation cell is an Excel formula. Only the Inputs sheet holds typed numbers.
 Inputs here mirror python/waterfall/config.py; python/tests checks that they agree.
 """
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 
 from openpyxl import Workbook
@@ -13,6 +16,8 @@ from openpyxl.workbook.defined_name import DefinedName
 # ============================== CONFIG ==============================
 OUTPUT_PATH = Path(__file__).resolve().parent / "securitization_waterfall.xlsx"
 AUTHOR = "Yazad Madan"
+SOFFICE_CANDIDATES = (r"C:\Program Files\LibreOffice\program\soffice.exe",
+                      r"C:\Program Files (x86)\LibreOffice\program\soffice.exe", "soffice")
 HORIZON = 96
 ROW0 = 5  # sheet row holding period 0 on every time-series sheet
 
@@ -132,7 +137,7 @@ def build(path=OUTPUT_PATH):
     inp = Inputs(ws_in)
     I = inp.addr  # noqa: E741
 
-    # ---------------- Inputs ----------------
+    # Inputs
     inp.title("Inputs (typed values live only on this sheet). Collateral is SYNTHETIC; forward curve is ASSUMED.")
     inp.blank()
     inp.title("Active scenario")
@@ -213,7 +218,7 @@ def build(path=OUTPUT_PATH):
 
     per = lambda r: r - ROW0  # noqa: E731
 
-    # ---------------- Pool ----------------
+    # Pool
     P = Series(wb, "Pool", "Rep-line amortization. Order: defaults, interest, scheduled principal, prepayment. Period 0 is closing.")
     P.add("per", "Period", lambda r: per(r), lambda r: per(r), "0")
     P.add("fwd", "Forward index", lambda r: f"={I['fwd_start']}+({I['fwd_end']}-{I['fwd_start']})*(1-EXP(-{P.a('per', r)}/{I['fwd_tau']}))+{I['shift']}/10000",
@@ -253,7 +258,7 @@ def build(path=OUTPUT_PATH):
     P.add("recon", "Balance recon (beg-def-sch-pre-end)", None,
           lambda r: f"={P.a('t_beg', r)}-{P.a('t_def', r)}-{P.a('t_sch', r)}-{P.a('t_pre', r)}-{P.a('t_end', r)}", "0.000000")
 
-    # ---------------- Tests + Waterfall (mutually referencing, so define column names first) ----------------
+    # Tests + Waterfall (mutually referencing, so define column names first)
     W = Series(wb, "Waterfall", "Interest and principal priority of payments, turbo, reserve, write-downs.")
     Tt = Series(wb, "Tests", "OC and IC tests on pro forma balances, breach flags, excess spread.")
     W.add("per", "Period", lambda r: per(r), lambda r: per(r), "0")
@@ -382,7 +387,7 @@ def build(path=OUTPUT_PATH):
     Tt.add("turbo", "Excess spread diverted (turbo)", None, lambda r: f"={W.x('turbo', r)}")
     Tt.add("res_bal", "Reserve balance", lambda r: f"={W.x('res_end', r)}", lambda r: f"={W.x('res_end', r)}")
 
-    # ---------------- Cash flows per tranche ----------------
+    # Cash flows per tranche
     CF = Series(wb, "CashFlows", "Per-tranche cash flows. Period 0 is the purchase at par (negative).")
     CF.add("per", "Period", lambda r: per(r), lambda r: per(r), "0")
     for k in TR:
@@ -398,7 +403,7 @@ def build(path=OUTPUT_PATH):
     CF.add("cf_r", "R cash flow", lambda r: f"=-{I['bal_r']}", lambda r: f"={CF.a('int_r', r)}+{CF.a('prin_r', r)}")
     CF.add("fwd", "Forward index", lambda r: f"={P.x('fwd', r)}", lambda r: f"={P.x('fwd', r)}", PCT)
 
-    # ---------------- Retention time series ----------------
+    # Retention time series
     RC = Series(wb, "Retention_CF", "Retained-position cash flows and financing sweep by retention option.")
     RC.add("per", "Period", lambda r: per(r), lambda r: per(r), "0")
     RC.add("fwd", "Forward index", lambda r: f"={P.x('fwd', r)}", lambda r: f"={P.x('fwd', r)}", PCT)
@@ -529,7 +534,7 @@ def build(path=OUTPUT_PATH):
     for c_ in "BCDEFGHIJ":
         R.column_dimensions[c_].width = 20
 
-    # ---------------- Scenario summary ----------------
+    # Scenario summary
     S = wb.create_sheet("Scenario_Summary")
     S.cell(1, 1, "Scenario summary and integrity checks (live for the scenario selected on Inputs)").font = BOLD
     S.cell(2, 1, "Active scenario")
@@ -589,7 +594,7 @@ def build(path=OUTPUT_PATH):
     for s in (P, W, Tt, CF, RC):
         s.fill()
 
-    # ---------------- Defined names for reconciliation ----------------
+    # Defined names for reconciliation
     def name(nm, ref):
         wb.defined_names[nm] = DefinedName(nm, attr_text=ref)
 
@@ -633,5 +638,18 @@ def build(path=OUTPUT_PATH):
     return path
 
 
+def embed_cached_values(path):
+    """Round-trip through LibreOffice so the file carries calculated values for viewers that do not recalculate."""
+    exe = next((c for c in SOFFICE_CANDIDATES if Path(c).exists() or shutil.which(c)), None)
+    if exe is None:
+        return False
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run([exe, "-headless", "-convert-to", "xlsx", "-outdir", tmp, str(path)], check=True,
+                       capture_output=True, timeout=180)
+        shutil.copyfile(Path(tmp) / Path(path).name, path)
+    return True
+
+
 if __name__ == "__main__":
-    print("wrote", build())
+    out = build()
+    print("wrote", out, "| cached values embedded:", embed_cached_values(out))

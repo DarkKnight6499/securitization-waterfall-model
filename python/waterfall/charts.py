@@ -24,7 +24,7 @@ def chart_paydown(base: dict, stress: dict):
         t = res[C.PERIOD]
         for x in NOTES:
             ax.plot(t, res[C.tr(x, C.END)] / 1e6, label=f"Class {x}", color=TRANCHE_COLORS[x])
-        ax.plot(t, res[C.POOL_END] / 1e6, label="Collateral", color="#999999", linestyle="--")
+        ax.plot(t, res[C.POOL_END] / 1e6, label="Collateral", color="#999999", linestyle="dashed")
         ax.set_title(f"{res['scenario'].name}")
         ax.set_xlabel("Month")
         ax.grid(alpha=0.3)
