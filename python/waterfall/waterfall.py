@@ -2,7 +2,7 @@
 
 Per payment date the order of calculation is:
   1. Collateral cash and interest/principal available funds.
-  2. Regular principal to A, B, C (sequential, or pro rata until a prior-period breach).
+  2. Regular principal to A, B, C (sequential, or pro rata until the first breach, then sequential for good).
   3. OC and IC tests on pro forma balances (after regular principal, before turbo).
   4. Interest priority of payments (see run_waterfall docstring).
   5. Write-downs of any remaining principal deficiency, most junior note first.
@@ -27,7 +27,13 @@ def run_waterfall(deal: Deal, scen: Scenario) -> dict:
     4 Class B interest; 5 turbo if Class B test breached; 6 Class C interest; 7 turbo if Class C
     test breached; 8 turbo to cure principal deficiency (realized losses); 9 reserve top-up to
     target; 10 residual. Unpaid fees and interest carry forward without interest on interest.
-    Principal priority: regular principal collections to A, B, C, then any excess to the residual.
+    Steps 1 to 10 run on interest collections only. The reserve then draws exactly the fees, Class A
+    interest and Class B interest still unpaid and pays those items directly, so a draw is never
+    swept into turbo or principal. Principal priority: regular principal collections to A, B, C,
+    then any excess to the residual. The pro rata mode is a latching switch: after the first
+    breach every later period is sequential, even if the tests cure. The index for period t is
+    fwd[t], the curve value at the end of month t (the payment date), applied to the beginning
+    balance with a 30/360 monthly convention (rate / 12).
     """
     n = deal.horizon
     pool = simulate_pool(deal, scen)
@@ -40,7 +46,8 @@ def run_waterfall(deal: Deal, scen: Scenario) -> dict:
         for f in (C.BEG, C.INT_ACC, C.INT_DUE, C.INT_PAID, C.INT_SHORT, C.CPN, C.REG, C.PF,
                   C.PRIN, C.WD, C.END, C.X, C.OC, C.IC, C.BREACH):
             res[C.tr(tranche, f)] = z()
-    for k in (C.FEE_DUE, C.FEE_PAID, C.FEE_SHORT, C.INT_COLL, C.RES_BEG, C.RES_DRAW, C.RES_TOPUP,
+    for k in (C.FEE_DUE, C.FEE_PAID, C.FEE_SHORT, C.INT_COLL, C.RES_BEG, C.RES_DRAW, C.RES_DRAW_FEE,
+              C.RES_DRAW_A, C.RES_DRAW_B, C.RES_TOPUP,
               C.RES_RELEASE, C.RES_END, C.AIF, C.APF, C.SEQ_FLAG, C.TURBO_TOTAL, C.TURBO_A,
               C.TURBO_B, C.TURBO_C, C.PDL_PRE, C.DEFICIENCY, C.RESID_INT, C.RESID_PRIN,
               C.RESID_CASH, C.RETIRED, C.EXCESS_SPREAD, C.EXCESS_SPREAD_BPS, C.BREACH_ANY,
@@ -63,12 +70,11 @@ def run_waterfall(deal: Deal, scen: Scenario) -> dict:
         fee_due = fee_acc + res[C.FEE_SHORT][t - 1]
         int_coll = pool[C.POOL_INT][t]
         res_beg = res[C.RES_END][t - 1]
-        draw = min(res_beg, max(0.0, fee_due + due["A"] + due["B"] - int_coll))
-        aif = int_coll + draw
         apf = pool[C.POOL_SCH][t] + pool[C.POOL_PRE][t] + pool[C.POOL_REC][t]
 
         # regular principal
-        seq = 1.0 if (seq_mode or res[C.BREACH_ANY][t - 1] == 1.0) else 0.0
+        latched = res[C.BREACH_ANY][t - 1] == 1.0 or res[C.SEQ_FLAG][t - 1] == 1.0  # one-way switch
+        seq = 1.0 if (seq_mode or latched) else 0.0
         sum_beg = sum(beg.values())
         reg = {}
         if seq == 1.0:
@@ -100,26 +106,34 @@ def run_waterfall(deal: Deal, scen: Scenario) -> dict:
             res[C.tr(x, C.BREACH)][t] = breach[x]
         any_breach = 1.0 if max(breach.values()) > 0 else 0.0
 
-        # interest waterfall
-        fees_paid = min(fee_due, aif)
-        rem = aif - fees_paid
-        paid = {}
-        paid["A"] = min(due["A"], rem)
-        rem -= paid["A"]
+        # interest waterfall on collections only; the reserve covers what is left unpaid afterwards
+        fees_c = min(fee_due, int_coll)
+        rem = int_coll - fees_c
+        paid_c = {}
+        paid_c["A"] = min(due["A"], rem)
+        rem -= paid_c["A"]
         used = 0.0
         t1 = min(rem, pf_tot - used) if breach["A"] else 0.0
         rem -= t1
         used += t1
-        paid["B"] = min(due["B"], rem)
-        rem -= paid["B"]
+        paid_c["B"] = min(due["B"], rem)
+        rem -= paid_c["B"]
         t2 = min(rem, pf_tot - used) if breach["B"] else 0.0
         rem -= t2
         used += t2
-        paid["C"] = min(due["C"], rem)
-        rem -= paid["C"]
+        paid_c["C"] = min(due["C"], rem)
+        rem -= paid_c["C"]
         t3 = min(rem, pf_tot - used) if breach["C"] else 0.0
         rem -= t3
         used += t3
+        short_fee, short_a, short_b = fee_due - fees_c, due["A"] - paid_c["A"], due["B"] - paid_c["B"]
+        draw = min(res_beg, short_fee + short_a + short_b)
+        d_fee = min(draw, short_fee)
+        d_a = min(draw - d_fee, short_a)
+        d_b = min(short_b, draw - d_fee - d_a)
+        fees_paid = fees_c + d_fee
+        paid = {"A": paid_c["A"] + d_a, "B": paid_c["B"] + d_b, "C": paid_c["C"]}
+        aif = int_coll + draw
         def_pre = max(0.0, pf_tot - used - val)
         t4 = min(rem, def_pre)
         rem -= t4
@@ -165,6 +179,7 @@ def run_waterfall(deal: Deal, scen: Scenario) -> dict:
         res[C.INT_COLL][t] = int_coll
         res[C.RES_BEG][t] = res_beg
         res[C.RES_DRAW][t] = draw
+        res[C.RES_DRAW_FEE][t], res[C.RES_DRAW_A][t], res[C.RES_DRAW_B][t] = d_fee, d_a, d_b
         res[C.RES_TOPUP][t] = topup
         res[C.RES_RELEASE][t] = release
         res[C.RES_END][t] = res_after + topup - release

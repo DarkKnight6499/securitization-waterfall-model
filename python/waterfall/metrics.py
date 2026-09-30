@@ -4,7 +4,7 @@ import math
 import numpy as np
 
 from . import columns as C
-from .config import LOSS_THRESHOLD_USD, TRANCHES
+from .config import LOSS_THRESHOLD_USD, NOTES, TRANCHES
 
 PRIN_EPS = 0.005  # dollars; below this a period counts as no principal
 
@@ -110,20 +110,53 @@ def tranche_summary(res: dict) -> dict:
             "loss_pct": loss / deal.par(x),
             "takes_loss": loss > LOSS_THRESHOLD_USD,
         }
+        if x in NOTES:
+            short = res[C.tr(x, C.INT_SHORT)]  # float dust below a millionth of a dollar counts as zero
+            row["unpaid_interest_end"] = float(short[-1]) if short[-1] > 1e-6 else 0.0
+            row["unpaid_interest_peak"] = float(short.max()) if short.max() > 1e-6 else 0.0
+        else:
+            row["unpaid_interest_end"] = row["unpaid_interest_peak"] = 0.0  # residual has no interest claim
+        row["any_shortfall"] = row["takes_loss"] or row["unpaid_interest_peak"] > LOSS_THRESHOLD_USD
         out[x] = row
     return out
 
 
-def most_senior_impaired(summary: dict) -> str:
+def _most_senior(summary: dict, flag: str) -> str:
     for x in TRANCHES:
-        if summary[x]["takes_loss"]:
+        if summary[x][flag]:
             return x
     return "none"
 
 
-def first_loss_tranche(summary: dict) -> str:
-    """Most junior tranche first, so the first tranche to absorb a loss."""
+def _most_junior(summary: dict, flag: str) -> str:
     for x in reversed(TRANCHES):
-        if summary[x]["takes_loss"]:
+        if summary[x][flag]:
             return x
     return "none"
+
+
+def most_senior_writedown(summary: dict) -> str:
+    """Most senior class with a principal write-down (interest deferrals are ignored)."""
+    return _most_senior(summary, "takes_loss")
+
+
+def most_junior_writedown(summary: dict) -> str:
+    """Most junior class with a principal write-down, i.e. the first to absorb a loss."""
+    return _most_junior(summary, "takes_loss")
+
+
+def most_senior_shortfall(summary: dict) -> str:
+    """Most senior class with a write-down or unpaid interest at any payment date."""
+    return _most_senior(summary, "any_shortfall")
+
+
+def first_shortfall_tranche(summary: dict) -> str:
+    """Most junior class with any shortfall, the first in the order shortfalls are absorbed."""
+    return _most_junior(summary, "any_shortfall")
+
+
+def principal_subordination(deal) -> dict:
+    """Share of the original pool below each note; the reserve cannot absorb principal, so it is excluded."""
+    pool = deal.pool_balance
+    return {"A": (pool - deal.bal_a) / pool, "B": (pool - deal.bal_a - deal.bal_b) / pool,
+            "C": (pool - deal.bal_a - deal.bal_b - deal.bal_c) / pool}

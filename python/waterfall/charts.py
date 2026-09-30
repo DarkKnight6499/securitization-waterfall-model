@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 from . import columns as C  # noqa: E402
 from .config import CHART_DIR, NOTES, TRANCHES  # noqa: E402
+from .metrics import principal_subordination  # noqa: E402
 
 TRANCHE_COLORS = {"A": "#1b6ca8", "B": "#e08a1e", "C": "#7a3e9d", "R": "#4d4d4d"}
 
@@ -36,18 +37,20 @@ def chart_paydown(base: dict, stress: dict):
 def chart_loss_vs_subordination(results: list):
     deal = results[0]["deal"]
     pool = deal.pool_balance
-    sub = {"C": deal.par("R") / pool,
-           "B": (deal.par("C") + deal.par("R")) / pool,
-           "A": (deal.par("B") + deal.par("C") + deal.par("R")) / pool}
+    # principal subordination only: the reserve cannot absorb a principal write-down, so it is excluded
+    sub = principal_subordination(deal)
     fig, ax = plt.subplots(figsize=(8, 4.5))
     for res in results:
         ax.plot(res[C.PERIOD], res[C.POOL_CUM_LOSS] / pool * 100, label=res["scenario"].name)
     for x, lvl in sub.items():
         ax.axhline(lvl * 100, color=TRANCHE_COLORS[x], linestyle=":")
-        ax.text(res[C.PERIOD][-1], lvl * 100, f" Class {x} subordination {lvl:.1%}", va="bottom", ha="right",
-                color=TRANCHE_COLORS[x], fontsize=8)
+        below = x == "B"  # the Stress curve hugs the B line from above, so its label goes underneath
+        ax.text(res[C.PERIOD][-1], lvl * 100, f" Class {x} principal subordination {lvl:.2%}",
+                va="top" if below else "bottom", ha="right", color=TRANCHE_COLORS[x], fontsize=8)
     ax.set_xlabel("Month")
     ax.set_ylabel("Cumulative net loss (% of original pool)")
+    ax.set_title(f"Reserve account ({deal.reserve_initial / pool:.2%} of pool) is liquidity only, excluded from subordination",
+                 fontsize=8)
     ax.legend(fontsize=8)
     ax.grid(alpha=0.3)
     return _save(fig, "cumulative_loss_vs_subordination.png")

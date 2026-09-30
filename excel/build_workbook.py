@@ -277,12 +277,12 @@ def build(path=OUTPUT_PATH):
               lambda r, k=k: f"={W.a(f'acc_{k}', r)}+{W.a(f'short_{k}', r - 1)}")
     W.add("int_coll", "Interest collections", None, lambda r: f"={P.x('t_int', r)}")
     W.add("res_beg", "Reserve beg", None, lambda r: f"={W.a('res_end', r - 1)}")
-    W.add("draw", "Reserve draw", None,
-          lambda r: f"=MIN({W.a('res_beg', r)},MAX(0,{W.a('fee_due', r)}+{W.a('due_a', r)}+{W.a('due_b', r)}-{W.a('int_coll', r)}))")
+    W.add("draw", "Reserve draw (fees, A and B interest left unpaid by collections)", None,
+          lambda r: f"=MIN({W.a('res_beg', r)},({W.a('fee_due', r)}-{W.a('fees_c', r)})+({W.a('due_a', r)}-{W.a('paid_a_c', r)})+({W.a('due_b', r)}-{W.a('paid_b_c', r)}))")
     W.add("aif", "Available interest funds", None, lambda r: f"={W.a('int_coll', r)}+{W.a('draw', r)}")
     W.add("apf", "Available principal funds", None, lambda r: f"={P.x('t_sch', r)}+{P.x('t_pre', r)}+{P.x('rec', r)}")
-    W.add("seq", "Sequential flag", None,
-          lambda r: f"=IF(OR({I['mode_seq']}=1,{Tt.x('any', r - 1)}=1),1,0)", "0")
+    W.add("seq", "Sequential flag (latches after the first breach)", 0,
+          lambda r: f"=IF(OR({I['mode_seq']}=1,{Tt.x('any', r - 1)}=1,{W.a('seq', r - 1)}=1),1,0)", "0")
     W.add("sum_beg", "Sum A+B+C beg", None, lambda r: f"={W.a('beg_a', r)}+{W.a('beg_b', r)}+{W.a('beg_c', r)}")
 
     def pro(k, r):
@@ -300,14 +300,15 @@ def build(path=OUTPUT_PATH):
         W.add(f"pf_{k}", f"{k.upper()} pro forma balance", None, lambda r, k=k: f"={W.a(f'beg_{k}', r)}-{W.a(f'reg_{k}', r)}")
     W.add("pf_tot", "Pro forma A+B+C", None, lambda r: f"={W.a('pf_a', r)}+{W.a('pf_b', r)}+{W.a('pf_c', r)}")
     # interest priority of payments
-    W.add("fees_paid", "1 Senior fees paid", None, lambda r: f"=MIN({W.a('fee_due', r)},{W.a('aif', r)})")
-    W.add("rem1", "Remaining after fees", None, lambda r: f"={W.a('aif', r)}-{W.a('fees_paid', r)}")
-    W.add("paid_a", "2 A interest paid", None, lambda r: f"=MIN({W.a('due_a', r)},{W.a('rem1', r)})")
-    W.add("rem2", "Remaining after A int", None, lambda r: f"={W.a('rem1', r)}-{W.a('paid_a', r)}")
+    # steps 1 to 10 run on interest collections only; the reserve draw is allocated afterwards
+    W.add("fees_c", "1 Senior fees paid from collections", None, lambda r: f"=MIN({W.a('fee_due', r)},{W.a('int_coll', r)})")
+    W.add("rem1", "Remaining after fees", None, lambda r: f"={W.a('int_coll', r)}-{W.a('fees_c', r)}")
+    W.add("paid_a_c", "2 A interest paid from collections", None, lambda r: f"=MIN({W.a('due_a', r)},{W.a('rem1', r)})")
+    W.add("rem2", "Remaining after A int", None, lambda r: f"={W.a('rem1', r)}-{W.a('paid_a_c', r)}")
     W.add("t1", "3 Turbo (A test breach)", None, lambda r: f"=IF({Tt.x('br_a', r)}=1,MIN({W.a('rem2', r)},{W.a('pf_tot', r)}),0)")
     W.add("rem3", "Remaining after turbo 1", None, lambda r: f"={W.a('rem2', r)}-{W.a('t1', r)}")
-    W.add("paid_b", "4 B interest paid", None, lambda r: f"=MIN({W.a('due_b', r)},{W.a('rem3', r)})")
-    W.add("rem4", "Remaining after B int", None, lambda r: f"={W.a('rem3', r)}-{W.a('paid_b', r)}")
+    W.add("paid_b_c", "4 B interest paid from collections", None, lambda r: f"=MIN({W.a('due_b', r)},{W.a('rem3', r)})")
+    W.add("rem4", "Remaining after B int", None, lambda r: f"={W.a('rem3', r)}-{W.a('paid_b_c', r)}")
     W.add("t2", "5 Turbo (B test breach)", None,
           lambda r: f"=IF({Tt.x('br_b', r)}=1,MIN({W.a('rem4', r)},{W.a('pf_tot', r)}-{W.a('t1', r)}),0)")
     W.add("rem5", "Remaining after turbo 2", None, lambda r: f"={W.a('rem4', r)}-{W.a('t2', r)}")
@@ -320,6 +321,15 @@ def build(path=OUTPUT_PATH):
           lambda r: f"=MAX(0,{W.a('pf_tot', r)}-{W.a('t1', r)}-{W.a('t2', r)}-{W.a('t3', r)}-{P.x('val', r)})")
     W.add("t4", "8 Turbo (cure deficiency)", None, lambda r: f"=MIN({W.a('rem7', r)},{W.a('def_pre', r)})")
     W.add("rem8", "Remaining after turbo 4", None, lambda r: f"={W.a('rem7', r)}-{W.a('t4', r)}")
+    W.add("d_fee", "Reserve draw applied to fees", None,
+          lambda r: f"=MIN({W.a('draw', r)},{W.a('fee_due', r)}-{W.a('fees_c', r)})")
+    W.add("d_a", "Reserve draw applied to A interest", None,
+          lambda r: f"=MIN({W.a('draw', r)}-{W.a('d_fee', r)},{W.a('due_a', r)}-{W.a('paid_a_c', r)})")
+    W.add("d_b", "Reserve draw applied to B interest", None,
+          lambda r: f"=MIN({W.a('due_b', r)}-{W.a('paid_b_c', r)},{W.a('draw', r)}-{W.a('d_fee', r)}-{W.a('d_a', r)})")
+    W.add("fees_paid", "Senior fees paid (collections + reserve)", None, lambda r: f"={W.a('fees_c', r)}+{W.a('d_fee', r)}")
+    W.add("paid_a", "A interest paid (collections + reserve)", None, lambda r: f"={W.a('paid_a_c', r)}+{W.a('d_a', r)}")
+    W.add("paid_b", "B interest paid (collections + reserve)", None, lambda r: f"={W.a('paid_b_c', r)}+{W.a('d_b', r)}")
     W.add("turbo", "Turbo total", None,
           lambda r: f"={W.a('t1', r)}+{W.a('t2', r)}+{W.a('t3', r)}+{W.a('t4', r)}")
     W.add("turbo_a", "Turbo to A", None, lambda r: f"=MIN({W.a('pf_a', r)},{W.a('turbo', r)})")
@@ -418,22 +428,32 @@ def build(path=OUTPUT_PATH):
     OPT_LABEL = {"rrv": "US RR vertical 246.4(a)(1)", "rrh": "US RR horizontal 246.4(a)(2)",
                  "rrl": "US RR L-shaped 246.4(a)(3)", "euv": "EU Art 6(3)(a) vertical",
                  "eufl": "EU Art 6(3)(d) first loss"}
+    CLS = ("a", "b", "c", "r1", "r2")  # R1 retained first-loss residual subclass, R2 sold residual subclass
     # layout of Retention sheet
     fv_row = {k: 6 + i for i, k in enumerate(ALL)}  # FV table rows 6..9, column C = FV
     frac_row0 = 15
-    frac_row = {o: frac_row0 + i for i, o in enumerate(OPTS)}  # columns B..E = A,B,C,R
-    frac_col = {k: get_column_letter(2 + i) for i, k in enumerate(ALL)}  # A..D? A=col B
-    hz_row = frac_row0 + len(OPTS) + 3  # helper block for L-shape horizontal component
+    frac_row = {o: frac_row0 + i for i, o in enumerate(OPTS)}  # columns B..F = A,B,C,R1,R2; G = R2 par
+    frac_col = {k: get_column_letter(2 + i) for i, k in enumerate(CLS)}
+    P2_COL, PAR_COL, FV_COL, ADV_COL, PARPCT_COL, FVPCT_COL, REG_COL = "G", "H", "I", "J", "K", "L", "M"
+    hz_row = frac_row0 + len(OPTS) + 3  # helper block: whole-class flags for the L-shaped horizontal component
     fr = lambda o, k: f"Retention!${frac_col[k]}${frac_row[o]}"  # noqa: E731
+    p2c = lambda o: f"Retention!${P2_COL}${frac_row[o]}"  # noqa: E731
     fvc = lambda k: f"Retention!$C${fv_row[k]}"  # noqa: E731
     parc = lambda k: I[f"bal_{k}"]  # noqa: E731
-    sum_fv = "Retention!$C$10"
-    cost_cell = lambda o: f"Retention!$F${frac_row[o]}"  # noqa: E731
-    adv_cell = lambda o: f"Retention!$H${frac_row[o]}"  # noqa: E731
+    cost_cell = lambda o: f"Retention!${PAR_COL}${frac_row[o]}"  # noqa: E731
+    adv_cell = lambda o: f"Retention!${ADV_COL}${frac_row[o]}"  # noqa: E731
 
+    RC.add("cf_r_raw", "R residual cash (interest distribution + principal + release)", None,
+           lambda r: f"={CF.x('cf_r', r)}")
     for o in OPTS:
+        # R2 is a priority claim on residual cash accruing at forward + residual FV margin; R1 gets the rest
+        RC.add(f"r2b_{o}", f"{o} R2 claim balance", lambda r, o=o: f"={p2c(o)}",
+               lambda r, o=o: f"={RC.a(f'r2b_{o}', r - 1)}*(1+({RC.a('fwd', r)}+{I['fvm_r']})/12)-{RC.a(f'r2p_{o}', r)}")
+        RC.add(f"r2p_{o}", f"{o} R2 payment", None,
+               lambda r, o=o: f"=MIN({RC.a('cf_r_raw', r)},{RC.a(f'r2b_{o}', r - 1)}*(1+({RC.a('fwd', r)}+{I['fvm_r']})/12))")
         RC.add(f"cf_{o}", f"{OPT_LABEL[o]} retained cash flow", lambda r, o=o: f"=-{cost_cell(o)}",
-               lambda r, o=o: "=" + "+".join(f"{fr(o, k)}*{CF.x(f'cf_{k}', r)}" for k in ALL))
+               lambda r, o=o: "=" + "+".join(f"{fr(o, k)}*{CF.x(f'cf_{k}', r)}" for k in TR)
+               + f"+{fr(o, 'r1')}*({RC.a('cf_r_raw', r)}-{RC.a(f'r2p_{o}', r)})+{fr(o, 'r2')}*{RC.a(f'r2p_{o}', r)}")
         RC.add(f"lb_{o}", f"{o} loan balance", lambda r, o=o: f"={adv_cell(o)}",
                lambda r, o=o: f"={RC.a(f'lb_{o}', r - 1)}+{RC.a(f'li_{o}', r)}-{RC.a(f'lp_{o}', r)}")
         RC.add(f"li_{o}", f"{o} loan interest", None,
@@ -445,6 +465,7 @@ def build(path=OUTPUT_PATH):
 
     R.cell(1, 1, "Risk retention sizing (US Regulation RR, 17 CFR Part 246; EU Regulation 2017/2402 Article 6)").font = BOLD
     R.cell(2, 1, "Fair values are PV of the selected scenario's tranche cash flows at forward + assumed margin (illustrative). Retained cost basis for yield is par.")
+    R.cell(3, 1, "Horizontal options retain R1, a separately identified first-loss residual subclass paid after the sold subclass R2 (17 CFR 246.2, eligible horizontal residual interest). R1 is the whole residual in the other options.")
     R.cell(4, 1, "Fair value of each ABS interest").font = BOLD
     for j, h in enumerate(("Tranche", "Par", "Fair value used for sizing", "Live PV fair value (selected scenario)", "FV used % of par")):
         R.cell(5, 1 + j, h).font = BOLD
@@ -464,50 +485,83 @@ def build(path=OUTPUT_PATH):
     R.cell(13, 1, "EU 6(3)(d) required nominal (5% of pool at origination); same amount for 6(3)(c) and 6(3)(e)")
     R.cell(13, 3, f"={I['ret_pct']}*{I['pool_bal']}").number_format = NUM
 
-    for j, h in enumerate(("Option (fraction of each class retained)", "A", "B", "C", "R", "Retained par (cost)",
-                           "Retained fair value", "Advance", "Par % of pool", "FV % of all FV")):
-        R.cell(frac_row0 - 1, 1 + j, h).font = BOLD
-    # helper for horizontal stacks: rows in the hz block hold cumulative required amounts
-    def stack(row_label, req_formula, row):
-        """Fill a horizontal stack from bottom (R, C, B, A) into row; returns nothing."""
-        R.cell(row, 1, row_label)
-        rem = req_formula
-        for k in ("r", "c", "b", "a"):
+    for j, h in enumerate(("Option (fraction of each class retained)", "A", "B", "C",
+                           "R1 (retained first loss; whole R unless R2 is carved out)", "R2 (sold residual subclass)",
+                           "R2 par carved out of R", "Retained par (cost)", "Retained fair value", "Advance",
+                           "Par % of pool", "FV % of all FV",
+                           "Regulatory measure (246.4(a): vertical %, horizontal FV %, or their sum)")):
+        c = R.cell(frac_row0 - 1, 1 + j, h)
+        c.font = BOLD
+        c.alignment = Alignment(wrap_text=True)
+
+    def whole_flags(req, row):
+        """Whole junior notes C, B, A added while the residual alone falls short of req; written to row."""
+        rem = f"MAX(0,{req}-$C$9)"
+        for k in ("c", "b", "a"):
             col = frac_col[k]
-            R[f"{col}{row}"] = f"=IF({fvc(k)}<=0,0,MIN(1,MAX(0,{rem})/{fvc(k)}))"
+            R[f"{col}{row}"] = f"=IF({rem}>0,1,0)"
             R[f"{col}{row}"].number_format = RATIO
-            rem = f"{rem}-{col}{row}*{fvc(k)}"
+            rem = f"({rem}-{col}{row}*{fvc(k)})"
+
     for o in OPTS:
-        rw = frac_row[o]
-        R.cell(rw, 1, OPT_LABEL[o])
-    for k in ALL:
+        R.cell(frac_row[o], 1, OPT_LABEL[o])
+    for k in TR:
         R[f"{frac_col[k]}{frac_row['rrv']}"] = f"={I['ret_pct']}"
         R[f"{frac_col[k]}{frac_row['euv']}"] = f"={I['ret_pct']}*{I[f'eu_sold_{k}']}"
-    stack(OPT_LABEL["rrh"], f"{I['ret_pct']}*$C$10", frac_row["rrh"])
-    R.cell(hz_row - 1, 1, "Helper: horizontal component of the L-shaped option").font = BOLD
-    stack("L-shape horizontal component", f"({I['ret_pct']}-{I['lshape_v']})*$C$10", hz_row)
-    for k in ALL:
-        R[f"{frac_col[k]}{frac_row['rrl']}"] = f"=MIN(1,{I['lshape_v']}+{frac_col[k]}{hz_row})"
+    R[f"{frac_col['r1']}{frac_row['rrv']}"] = f"={I['ret_pct']}"
+    R[f"{frac_col['r1']}{frac_row['euv']}"] = f"={I['ret_pct']}*{I['eu_sold_r']}"
+    req_h = f"{I['ret_pct']}*$C$10"
+    req_l = f"({I['ret_pct']}-{I['lshape_v']})*$C$10"
+    whole_flags(req_h, frac_row["rrh"])
+    R[f"{frac_col['r1']}{frac_row['rrh']}"] = f"=IF({req_h}>0,1,0)"
+    R[f"{P2_COL}{frac_row['rrh']}"] = f"=MAX(0,$C$9-{req_h})"
+    R.cell(hz_row - 1, 1, "Helper: whole-class flags for the horizontal component of the L-shaped option").font = BOLD
+    R.cell(hz_row, 1, "L-shape horizontal component whole-class flags")
+    whole_flags(req_l, hz_row)
+    for k in TR:
+        R[f"{frac_col[k]}{frac_row['rrl']}"] = f"=MAX({I['lshape_v']},{frac_col[k]}{hz_row})"
+    R[f"{frac_col['r1']}{frac_row['rrl']}"] = f"=IF({req_l}>0,1,0)"
+    R[f"{frac_col['r2']}{frac_row['rrl']}"] = f"={I['lshape_v']}"
+    R[f"{P2_COL}{frac_row['rrl']}"] = f"=MAX(0,$C$9-{req_l})"
     # EU first loss: whole classes from the bottom until nominal covers 5% of pool
     need = f"{I['ret_pct']}*{I['pool_bal']}"
-    R[f"{frac_col['r']}{frac_row['eufl']}"] = f"=IF(0<{need},1,0)"
-    cum = f"{frac_col['r']}{frac_row['eufl']}*{parc('r')}"
+    R[f"{frac_col['r1']}{frac_row['eufl']}"] = f"=IF(0<{need},1,0)"
+    cum = f"{frac_col['r1']}{frac_row['eufl']}*{parc('r')}"
     for k in ("c", "b", "a"):
         R[f"{frac_col[k]}{frac_row['eufl']}"] = f"=IF({cum}<{need},1,0)"
         cum = f"{cum}+{frac_col[k]}{frac_row['eufl']}*{parc(k)}"
     for o in OPTS:
         rw = frac_row[o]
-        for k in ALL:
+        for k in CLS:
+            if R[f"{frac_col[k]}{rw}"].value is None:
+                R[f"{frac_col[k]}{rw}"] = 0
             R[f"{frac_col[k]}{rw}"].number_format = RATIO
-        R[f"F{rw}"] = "=" + "+".join(f"{frac_col[k]}{rw}*{parc(k)}" for k in ALL)
-        R[f"G{rw}"] = "=" + "+".join(f"{frac_col[k]}{rw}*$C${fv_row[k]}" for k in ALL)
-        R[f"H{rw}"] = "=" + "+".join(f"{frac_col[k]}{rw}*{parc(k)}*{I[f'adv_{k}']}" for k in ALL)
-        R[f"I{rw}"] = f"=F{rw}/{I['pool_bal']}"
-        R[f"J{rw}"] = f"=G{rw}/$C$10"
-        for c_ in "FGH":
+        if R[f"{P2_COL}{rw}"].value is None:
+            R[f"{P2_COL}{rw}"] = 0
+        R[f"{P2_COL}{rw}"].number_format = NUM
+        p2 = f"{P2_COL}{rw}"
+        f_ = lambda k: f"{frac_col[k]}{rw}"  # noqa: E731
+        notes_par = "+".join(f"{f_(k)}*{parc(k)}" for k in TR)
+        notes_fv = "+".join(f"{f_(k)}*$C${fv_row[k]}" for k in TR)
+        notes_adv = "+".join(f"{f_(k)}*{parc(k)}*{I[f'adv_{k}']}" for k in TR)
+        r1_par = f"({parc('r')}-{p2})"
+        R[f"{PAR_COL}{rw}"] = f"={notes_par}+{f_('r1')}*{r1_par}+{f_('r2')}*{p2}"
+        R[f"{FV_COL}{rw}"] = f"={notes_fv}+{f_('r1')}*($C$9-{p2})+{f_('r2')}*{p2}"
+        R[f"{ADV_COL}{rw}"] = f"={notes_adv}+({f_('r1')}*{r1_par}+{f_('r2')}*{p2})*{I['adv_r']}"
+        R[f"{PARPCT_COL}{rw}"] = f"={PAR_COL}{rw}/{I['pool_bal']}"
+        R[f"{FVPCT_COL}{rw}"] = f"={FV_COL}{rw}/$C$10"
+        for c_ in (PAR_COL, FV_COL, ADV_COL):
             R[f"{c_}{rw}"].number_format = NUM
-        R[f"I{rw}"].number_format = "0.0000%"
-        R[f"J{rw}"].number_format = "0.0000%"
+        R[f"{PARPCT_COL}{rw}"].number_format = "0.0000%"
+        R[f"{FVPCT_COL}{rw}"].number_format = "0.0000%"
+    R[f"{REG_COL}{frac_row['rrv']}"] = f"={I['ret_pct']}"
+    R[f"{REG_COL}{frac_row['rrh']}"] = f"={frac_col['r1']}{frac_row['rrh']}*($C$9-{P2_COL}{frac_row['rrh']})/$C$10"
+    R[f"{REG_COL}{frac_row['rrl']}"] = (
+        f"={I['lshape_v']}+{frac_col['r1']}{frac_row['rrl']}*($C$9-{P2_COL}{frac_row['rrl']})/$C$10")
+    for o in ("euv", "eufl"):
+        R[f"{REG_COL}{frac_row[o]}"] = "n/a"
+    for o in OPTS:
+        R[f"{REG_COL}{frac_row[o]}"].number_format = "0.0000%"
 
     out_row0 = hz_row + 4
     R.cell(out_row0 - 1, 1, "Retained position and financing view (selected scenario)").font = BOLD
@@ -531,7 +585,7 @@ def build(path=OUTPUT_PATH):
         R.cell(rw, 8, f"={RC.x(f'lb_{o}', last)}").number_format = NUM
         R.cell(rw, 9, irr12(RC.rng(f"eq_{o}"))).number_format = "0.0000%"
     R.column_dimensions["A"].width = 60
-    for c_ in "BCDEFGHIJ":
+    for c_ in "BCDEFGHIJKLM":
         R.column_dimensions[c_].width = 20
 
     # Scenario summary
@@ -544,7 +598,9 @@ def build(path=OUTPUT_PATH):
         S.cell(4, 1 + j, f"={I[key]}")
     heads = ("Tranche", "Original balance", "Interest paid", "Principal paid", "Write-down / capital shortfall", "Ending balance",
              "WAL (years)", "Yield at par (monthly IRR x 12)", "Principal window first", "Principal window last",
-             "Conservation check (orig - paid - writedown - end)", "Takes loss (1/0)")
+             "Conservation check (orig - paid - writedown - end)", "Write-down / capital loss above USD 1 (1/0)",
+             "Unpaid interest at horizon", "Peak unpaid interest (any month)",
+             "Any shortfall: write-down or unpaid interest above USD 1 (1/0)")
     for j, h in enumerate(heads):
         c = S.cell(6, 1 + j, h)
         c.font = BOLD
@@ -572,6 +628,13 @@ def build(path=OUTPUT_PATH):
         else:
             S.cell(rw, 11, f"=B{rw}-D{rw}-E{rw}-F{rw}").number_format = NUM
         S.cell(rw, 12, f"=IF(E{rw}>1,1,0)")
+        if k == "r":
+            S.cell(rw, 13, 0).number_format = NUM
+            S.cell(rw, 14, 0).number_format = NUM
+        else:
+            S.cell(rw, 13, f"={W.x(f'short_{k}', ROW0 + HORIZON)}").number_format = NUM
+            S.cell(rw, 14, f"=MAX({W.rng(f'short_{k}', ROW0 + 1)})").number_format = NUM
+        S.cell(rw, 15, f"=IF(OR(L{rw}=1,N{rw}>1),1,0)")
     S.cell(12, 1, "For R: column C is residual interest distributions, D is principal distributions plus reserve release, E is the capital shortfall (par less cash received, floored at 0).")
     S.cell(14, 1, "Integrity checks (sum of absolute differences, should be 0)").font = BOLD
     checks = (("Pool balance reconciliation", f"=SUMPRODUCT(ABS({P.rng('recon', ROW0 + 1)}))"),
@@ -581,14 +644,30 @@ def build(path=OUTPUT_PATH):
               ("Tranche conservation A", "=ABS(K7)"), ("Tranche conservation B", "=ABS(K8)"), ("Tranche conservation C", "=ABS(K9)"),
               ("Months with a trigger breach", f"=SUM({Tt.rng('any', ROW0 + 1)})"),
               ("Excess spread at month 12 (bps annualized)", f"={Tt.x('es_bps', ROW0 + 12)}"),
-              ("Cumulative net loss % of pool at horizon", f"={Tt.x('cum_loss_pct', ROW0 + HORIZON)}"))
+              ("Cumulative net loss % of pool at horizon", f"={Tt.x('cum_loss_pct', ROW0 + HORIZON)}"),
+              ("Reserve draw not applied to fees, A or B interest (sum of absolute differences, should be 0)",
+               f"=SUMPRODUCT(ABS({W.rng('draw', ROW0 + 1)}-{W.rng('d_fee', ROW0 + 1)}-{W.rng('d_a', ROW0 + 1)}-{W.rng('d_b', ROW0 + 1)}))"))
     for i, (lab, f) in enumerate(checks):
         S.cell(15 + i, 1, lab)
         S.cell(15 + i, 2, f).number_format = "0.000000"
+    S.cell(29, 1, "Class labels: write-down only versus write-down or unpaid interest").font = BOLD
+    def _pick(order, col):
+        expr = '"none"'
+        for k in reversed(order):
+            expr = f'IF({col}{srow[k]}=1,"{k.upper()}",{expr})'
+        return "=" + expr
+    label_rows = (("Most senior class with a principal write-down (interest deferrals ignored)", _pick(ALL, "L")),
+                  ("Most junior class with a principal write-down (first to absorb a loss)", _pick(tuple(reversed(ALL)), "L")),
+                  ("Most senior class with any shortfall (write-down or unpaid interest)", _pick(ALL, "O")),
+                  ("First class with any shortfall (most junior class with a write-down or unpaid interest)",
+                   _pick(tuple(reversed(ALL)), "O")))
+    for i, (lab, fml) in enumerate(label_rows):
+        S.cell(30 + i, 1, lab)
+        S.cell(30 + i, 2, fml)
     S.cell(26, 1, "Break-even CDR per tranche is solved by bisection in python/ (Excel has no live solver). Set the CDR of a scenario to a Python break-even value here to confirm zero loss just below it.")
     S.cell(27, 1, "Scenario table lives on Inputs; change the selected scenario number there to recalculate every sheet.")
     S.column_dimensions["A"].width = 60
-    for j in range(2, 13):
+    for j in range(2, 16):
         S.column_dimensions[get_column_letter(j)].width = 18
 
     for s in (P, W, Tt, CF, RC):
@@ -618,8 +697,16 @@ def build(path=OUTPUT_PATH):
     name("CHECK_CASH", "Scenario_Summary!$B$16")
     name("CHECK_NOTES_OVER_CASH", "Scenario_Summary!$B$17")
     name("BREACH_MONTHS", "Scenario_Summary!$B$21")
-    name("FRAC_TABLE", f"Retention!$B${frac_row['rrv']}:$E${frac_row['eufl']}")
-    name("RET_AMOUNTS", f"Retention!$F${frac_row['rrv']}:$H${frac_row['eufl']}")
+    name("CHECK_RESERVE_ALLOC", "Scenario_Summary!$B$24")
+    name("LABELS", "Scenario_Summary!$B$30:$B$33")
+    for k in ALL:
+        K = k.upper()
+        name(f"UNPAID_END_{K}", f"Scenario_Summary!$M${srow[k]}")
+        name(f"UNPAID_PEAK_{K}", f"Scenario_Summary!$N${srow[k]}")
+        name(f"ANYSHORT_{K}", f"Scenario_Summary!$O${srow[k]}")
+    name("FRAC_TABLE", f"Retention!$B${frac_row['rrv']}:${P2_COL}${frac_row['eufl']}")
+    name("RET_AMOUNTS", f"Retention!${PAR_COL}${frac_row['rrv']}:${ADV_COL}${frac_row['eufl']}")
+    name("RET_REG", f"Retention!${REG_COL}${frac_row['rrv']}:${REG_COL}${frac_row['eufl']}")
     name("RET_OUT", f"Retention!$B${out_row['rrv']}:$I${out_row['eufl']}")
     name("INPUT_POOL_BAL", I["pool_bal"])
     name("INPUT_BAL_R", I["bal_r"])

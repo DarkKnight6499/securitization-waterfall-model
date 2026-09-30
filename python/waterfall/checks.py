@@ -27,6 +27,9 @@ def run_checks(res: dict) -> dict:
         cons = max(cons, abs(orig - total))
         out[f"conservation_{x}"] = float(orig - total)
     out["tranche_conservation_max_abs"] = cons
+    # every reserve draw must be applied to fees, Class A interest or Class B interest and nothing else
+    out["reserve_draw_alloc_max_abs"] = float(np.abs(
+        res[C.RES_DRAW] - res[C.RES_DRAW_FEE] - res[C.RES_DRAW_A] - res[C.RES_DRAW_B]).max())
     out["negative_balance_min"] = float(min(res[C.tr(x, C.END)].min() for x in NOTES))
     out["reserve_min"] = float(res[C.RES_END].min())
     out["pool_lifetime_recon_abs"] = float(abs(deal.pool_balance - (
@@ -34,5 +37,6 @@ def run_checks(res: dict) -> dict:
     out["passed"] = bool(
         out["pool_balance_recon_max_abs"] < TOL_USD and out["rep_line_recon_max_abs"] < TOL_USD
         and out["cash_conservation_max_abs"] < TOL_USD and out["notes_paid_over_cash_max"] < TOL_USD
-        and out["tranche_conservation_max_abs"] < TOL_USD and out["pool_lifetime_recon_abs"] < TOL_USD and out["negative_balance_min"] > -TOL_USD)
+        and out["tranche_conservation_max_abs"] < TOL_USD and out["reserve_draw_alloc_max_abs"] < TOL_USD
+        and out["pool_lifetime_recon_abs"] < TOL_USD and out["negative_balance_min"] > -TOL_USD)
     return out

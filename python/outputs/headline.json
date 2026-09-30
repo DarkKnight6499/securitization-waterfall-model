@@ -14,7 +14,10 @@
       "window_first": 1,
       "window_last": 42,
       "loss_pct": 0.0,
-      "takes_loss": false
+      "takes_loss": false,
+      "unpaid_interest_end": 0.0,
+      "unpaid_interest_peak": 0.0,
+      "any_shortfall": false
     },
     "B": {
       "original_balance": 40000000.0,
@@ -28,7 +31,10 @@
       "window_first": 42,
       "window_last": 51,
       "loss_pct": 0.0,
-      "takes_loss": false
+      "takes_loss": false,
+      "unpaid_interest_end": 0.0,
+      "unpaid_interest_peak": 0.0,
+      "any_shortfall": false
     },
     "C": {
       "original_balance": 30000000.0,
@@ -42,7 +48,10 @@
       "window_first": 51,
       "window_last": 60,
       "loss_pct": 0.0,
-      "takes_loss": false
+      "takes_loss": false,
+      "unpaid_interest_end": 0.0,
+      "unpaid_interest_peak": 0.0,
+      "any_shortfall": false
     },
     "R": {
       "original_balance": 33000000.0,
@@ -56,18 +65,21 @@
       "window_first": 60,
       "window_last": 90,
       "loss_pct": 0.0,
-      "takes_loss": false
+      "takes_loss": false,
+      "unpaid_interest_end": 0.0,
+      "unpaid_interest_peak": 0.0,
+      "any_shortfall": false
     }
   },
   "breakeven_cdr": {
     "0.4": {
-      "A": 0.5225987182191375,
+      "A": 0.5027916210063494,
       "B": 0.26428858593992577,
       "C": 0.12567554146605747,
       "R": 0.07478680531382909
     },
     "0.6": {
-      "A": 0.3025224357458911,
+      "A": 0.2920503445754321,
       "B": 0.1690357110826653,
       "C": 0.08582356257741139,
       "R": 0.051250533305642415
@@ -85,62 +97,80 @@
         "A": 0.05,
         "B": 0.05,
         "C": 0.05,
-        "R": 0.05
+        "R1": 0.05,
+        "R2": 0.0
       },
+      "r2_par": 0.0,
       "retained_par": 20150000.0,
       "retained_fair_value": 20125601.50214424,
+      "horizontal_fair_value": 0.0,
       "par_pct_of_all_interests": 0.05,
       "fv_pct_of_all_interests": 0.05,
-      "par_pct_of_pool": 0.050375
+      "par_pct_of_pool": 0.050375,
+      "regulatory_measure": 0.05
     },
     "RR_HORIZONTAL": {
       "fractions": {
-        "R": 0.5925195284399083,
-        "C": 0.0,
+        "A": 0.0,
         "B": 0.0,
-        "A": 0.0
+        "C": 0.0,
+        "R1": 1.0,
+        "R2": 0.0
       },
-      "retained_par": 19553144.438516974,
+      "r2_par": 13840538.91374135,
+      "retained_par": 19159461.08625865,
       "retained_fair_value": 20125601.50214424,
-      "par_pct_of_all_interests": 0.048518968830066934,
+      "horizontal_fair_value": 20125601.50214424,
+      "par_pct_of_all_interests": 0.04754208706267655,
       "fv_pct_of_all_interests": 0.05,
-      "par_pct_of_pool": 0.04888286109629244
+      "par_pct_of_pool": 0.047898652715646625,
+      "regulatory_measure": 0.05
     },
     "RR_LSHAPED": {
       "fractions": {
         "A": 0.025,
         "B": 0.025,
         "C": 0.025,
-        "R": 0.32125976421995417
+        "R1": 1.0,
+        "R2": 0.025
       },
-      "retained_par": 19851572.219258487,
-      "retained_fair_value": 20125601.50214424,
-      "par_pct_of_all_interests": 0.049259484415033465,
-      "fv_pct_of_all_interests": 0.05,
-      "par_pct_of_pool": 0.04962893054814622
+      "r2_par": 23903339.66481347,
+      "retained_par": 18944243.826806866,
+      "retained_fair_value": 19874031.483367436,
+      "horizontal_fair_value": 10062800.75107212,
+      "par_pct_of_all_interests": 0.04700804919803193,
+      "fv_pct_of_all_interests": 0.049375,
+      "par_pct_of_pool": 0.04736060956701717,
+      "regulatory_measure": 0.05
     },
     "EU_VERTICAL": {
       "fractions": {
         "A": 0.05,
         "B": 0.05,
         "C": 0.05,
-        "R": 0.05
+        "R1": 0.05,
+        "R2": 0.0
       },
+      "r2_par": 0.0,
       "retained_par": 20150000.0,
       "retained_fair_value": 20125601.50214424,
+      "horizontal_fair_value": 0.0,
       "par_pct_of_all_interests": 0.05,
       "fv_pct_of_all_interests": 0.05,
       "par_pct_of_pool": 0.050375
     },
     "EU_FIRST_LOSS": {
       "fractions": {
-        "R": 1.0,
-        "C": 0.0,
+        "A": 0.0,
         "B": 0.0,
-        "A": 0.0
+        "C": 0.0,
+        "R1": 1.0,
+        "R2": 0.0
       },
+      "r2_par": 0.0,
       "retained_par": 33000000.0,
       "retained_fair_value": 33966140.41588559,
+      "horizontal_fair_value": 0.0,
       "par_pct_of_all_interests": 0.08188585607940446,
       "fv_pct_of_all_interests": 0.08438540436236587,
       "par_pct_of_pool": 0.0825

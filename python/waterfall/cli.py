@@ -7,8 +7,8 @@ from . import columns as C
 from .charts import chart_breakeven, chart_loss_vs_subordination, chart_paydown
 from .checks import run_checks
 from .config import BASE_SCENARIO, BREAKEVEN_SEVERITIES, OUTPUT_DIR, SCENARIOS, STRESS_SCENARIO, TRANCHES, Deal
-from .metrics import first_loss_tranche, tranche_cash_flows
-from .retention import (OPTIONS, fair_values, retention_amounts, retention_report)
+from .metrics import tranche_cash_flows
+from .retention import OPTIONS, RET_CLASSES, fair_values, retention_amounts, retention_report, retention_structure
 from .scenarios import breakeven_table, loss_grid, run_scenarios
 
 SCENARIO_COL, TRANCHE_COL, OPTION_COL = "scenario", "tranche", "option"
@@ -45,8 +45,7 @@ def main() -> dict:
         for x in TRANCHES:
             row = {SCENARIO_COL: sc.name, "cpr": sc.cpr, "cdr": sc.cdr, "severity": sc.severity,
                    "lag": sc.lag, "rate_shift_bps": sc.rate_shift_bps, TRANCHE_COL: x,
-                   "first_loss_tranche": first_loss_tranche(r["summary"]),
-                   "most_senior_impaired": r["most_senior_impaired"]}
+                   **r["labels"]}
             row.update(r["summary"][x])
             rows.append(row)
     pd.DataFrame(rows).to_csv(OUTPUT_DIR / "tranche_summary_by_scenario.csv", index=False)
@@ -61,10 +60,10 @@ def main() -> dict:
 
     fv = fair_values(base)
     am = retention_amounts(deal, fv)
-    fractions = {o: am["options"][o]["fractions"] for o in OPTIONS}
+    structure = retention_structure(deal, fv)
     ret_rows, fin_rows = [], []
     for name, res in (("base", base), ("stress", stress)):
-        rep = retention_report(res, fractions)
+        rep = retention_report(res, structure)
         pd.DataFrame({C.PERIOD: res[C.PERIOD].astype(int), **{o: rep[o]["cf"] for o in OPTIONS}}).to_csv(
             OUTPUT_DIR / f"retained_cashflows_{name}.csv", index=False)
         for o in OPTIONS:
@@ -73,9 +72,10 @@ def main() -> dict:
                              "retained_fair_value": a["retained_fair_value"],
                              "par_pct_of_pool": a["par_pct_of_pool"],
                              "fv_pct_of_all_interests": a["fv_pct_of_all_interests"],
+                             "regulatory_measure": a.get("regulatory_measure"), "r2_par": a["r2_par"],
                              "total_cash_received": rep[o]["total_cash"],
                              "yield_at_cost": rep[o]["yield_at_cost"],
-                             **{f"fraction_{x}": a["fractions"][x] for x in TRANCHES}})
+                             **{f"fraction_{x}": a["fractions"][x] for x in RET_CLASSES}})
             fin_rows.append({SCENARIO_COL: name, OPTION_COL: o, "advance": f["advance"],
                              "effective_advance_rate": f["advance_rate_effective"],
                              "pv_coverage": f["pv_coverage"], "repaid_month": f["repaid_month"],

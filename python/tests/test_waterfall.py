@@ -10,6 +10,7 @@ from waterfall.waterfall import run_waterfall
 
 SEVERE = [s for s in SCENARIOS if s.name == "Severe stress"][0]
 STRESS = [s for s in SCENARIOS if s.name == "Stress"][0]
+RATE_SHOCK = [s for s in SCENARIOS if s.name == "Rate shock +300bp"][0]
 
 
 @pytest.mark.parametrize("scen", SCENARIOS, ids=lambda s: s.name)
@@ -71,6 +72,56 @@ def test_pro_rata_reverts_to_sequential_after_breach(deal):
     assert len(idx) > 0
     assert r[C.SEQ_FLAG][idx[0] + 1] == 1
     assert run_checks(r)["passed"]
+
+
+def test_pro_rata_switch_latches_after_breach_even_when_tests_cure(deal):
+    r = run_waterfall(replace(deal, principal_mode="pro_rata"), RATE_SHOCK)
+    breach = r[C.BREACH_ANY]
+    first = int(np.where(breach == 1)[0][0])
+    cured = [t for t in range(first + 1, len(breach)) if breach[t] == 0]
+    assert cured, "scenario must breach and then cure for this test to mean anything"
+    assert (r[C.SEQ_FLAG][first + 1:] == 1).all()
+    assert (r[C.SEQ_FLAG][1:first + 1] == 0).all()
+    assert (np.diff(r[C.SEQ_FLAG]) >= 0).all()
+
+
+def test_reserve_draw_pays_b_interest_and_is_never_swept_into_turbo(deal):
+    # regression: the draw sized for B interest used to be swept into Class A turbo principal
+    r = run_waterfall(deal, RATE_SHOCK)
+    months = [t for t in range(1, len(r[C.RES_DRAW])) if r[C.RES_DRAW][t] > 0]
+    assert len(months) >= 5
+    for t in months:
+        assert r[C.tr("A", C.BREACH)][t] == 1
+        assert r[C.tr("B", C.INT_PAID)][t] > 0
+        assert r[C.tr("B", C.INT_SHORT)][t] == pytest.approx(0, abs=1e-6)
+        assert r[C.RES_DRAW][t] == pytest.approx(r[C.tr("B", C.INT_PAID)][t])
+        # turbo is funded by collections left after fees and Class A interest, nothing more
+        assert r[C.TURBO_TOTAL][t] == pytest.approx(r[C.INT_COLL][t] - r[C.FEE_PAID][t] - r[C.tr("A", C.INT_PAID)][t], abs=1e-6)
+
+
+def test_reserve_size_does_not_change_class_a_turbo(deal):
+    # a draw is never swept into the Class A turbo, so removing the reserve leaves turbo step 1 untouched
+    with_reserve = run_waterfall(deal, RATE_SHOCK)
+    no_reserve = run_waterfall(replace(deal, reserve_initial=0.0, reserve_target=0.0), RATE_SHOCK)
+    assert with_reserve[C.RES_DRAW].sum() > 0
+    assert with_reserve[C.TURBO_STEPS[0]].sum() > 0
+    assert np.allclose(with_reserve[C.TURBO_STEPS[0]], no_reserve[C.TURBO_STEPS[0]], atol=1e-6)
+
+
+@pytest.mark.parametrize("scen", SCENARIOS, ids=lambda s: s.name)
+def test_reserve_draw_is_fully_allocated_to_fees_and_a_b_interest(runs, scen):
+    r = runs[scen.name]
+    parts = r[C.RES_DRAW_FEE] + r[C.RES_DRAW_A] + r[C.RES_DRAW_B]
+    assert np.allclose(r[C.RES_DRAW], parts, atol=1e-6)
+    assert (r[C.RES_DRAW_A] <= r[C.tr("A", C.INT_PAID)] + 1e-6).all()
+    assert (r[C.RES_DRAW_B] <= r[C.tr("B", C.INT_PAID)] + 1e-6).all()
+
+
+def test_reserve_draw_never_exceeds_unpaid_fees_and_a_b_interest(deal):
+    r = run_waterfall(replace(deal, servicing_fee=0.08), BASE_SCENARIO)
+    due = r[C.FEE_DUE] + r[C.tr("A", C.INT_DUE)] + r[C.tr("B", C.INT_DUE)]
+    assert (r[C.RES_DRAW] <= due + 1e-6).all()
+    assert r[C.RES_DRAW].sum() > 0
 
 
 def test_stress_breach_triggers_turbo(runs):

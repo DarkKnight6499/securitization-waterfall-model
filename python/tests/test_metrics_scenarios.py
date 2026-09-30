@@ -5,7 +5,8 @@ import pytest
 
 from waterfall import columns as C
 from waterfall.config import BASE_SCENARIO, BREAKEVEN_SEVERITIES, LOSS_THRESHOLD_USD, TRANCHES
-from waterfall.metrics import (discount_margin, first_loss_tranche, irr_annual, most_senior_impaired,
+from waterfall.metrics import (discount_margin, first_shortfall_tranche, irr_annual, most_junior_writedown,
+                               most_senior_shortfall, most_senior_writedown, principal_subordination,
                                principal_window, tranche_cash_flows, tranche_summary, wal_years)
 from waterfall.scenarios import breakeven_cdr, breakeven_table, loss_at_cdr, loss_grid, run_scenarios
 
@@ -56,14 +57,45 @@ def test_summary_base_is_clean_and_ordered(base):
     assert all(not s[x]["takes_loss"] for x in TRANCHES)
     assert s["A"]["wal_years"] < s["B"]["wal_years"] < s["C"]["wal_years"]
     assert s["A"]["window_last"] <= s["B"]["window_first"]
-    assert most_senior_impaired(s) == "none" and first_loss_tranche(s) == "none"
+    assert most_senior_writedown(s) == "none" and most_junior_writedown(s) == "none"
+    assert most_senior_shortfall(s) == "none" and first_shortfall_tranche(s) == "none"
 
 
-def test_scenario_grid_identifies_most_senior_impaired(deal):
+def test_scenario_grid_labels_writedown_only_and_shortfall(deal):
     rows = {r["scenario"].name: r for r in run_scenarios(deal)}
-    assert rows["Base"]["most_senior_impaired"] == "none"
-    assert rows["Severe stress"]["most_senior_impaired"] in ("A", "B")
-    assert first_loss_tranche(rows["Stress"]["summary"]) == "R"
+    assert rows["Base"]["labels"][C.WD_MOST_SENIOR] == "none"
+    assert rows["Severe stress"]["labels"][C.WD_MOST_SENIOR] in ("A", "B")
+    assert rows["Stress"]["labels"][C.WD_MOST_JUNIOR] == "R"
+    assert rows["Stress"]["labels"][C.SHORT_FIRST] == "R"
+
+
+def test_deferred_interest_is_visible_when_write_downs_are_not(deal):
+    # Rate shock: the write-down-only label names R, but Class C also defers interest at some point
+    row = {r["scenario"].name: r for r in run_scenarios(deal)}["Rate shock +300bp"]
+    summ = row["summary"]
+    assert most_senior_writedown(summ) == "R"
+    assert summ["C"]["writedown"] == 0 and summ["C"]["unpaid_interest_peak"] > 1e6
+    assert summ["C"]["any_shortfall"] and most_senior_shortfall(summ) == "C"
+    assert first_shortfall_tranche(summ) == "R"
+
+
+def test_ending_unpaid_interest_reported_for_notes(deal):
+    row = {r["scenario"].name: r for r in run_scenarios(deal)}["Severe stress"]
+    end = row["result"][C.tr("C", C.INT_SHORT)][-1]
+    assert row["summary"]["C"]["unpaid_interest_end"] == pytest.approx(end) and end > 0
+    assert row["summary"]["R"]["unpaid_interest_end"] == 0
+
+
+def test_loss_grid_carries_unpaid_interest_columns(deal):
+    rows = loss_grid(deal)
+    assert all(f"unpaid_interest_end_{x}" in rows[0] for x in TRANCHES)
+    assert C.SHORT_FIRST in rows[0] and C.WD_MOST_SENIOR in rows[0]
+
+
+def test_principal_subordination_excludes_reserve(deal):
+    sub = principal_subordination(deal)
+    assert sub["A"] == pytest.approx(0.25) and sub["B"] == pytest.approx(0.15) and sub["C"] == pytest.approx(0.075)
+    assert deal.par("R") / deal.pool_balance == pytest.approx(0.0825)  # includes the reserve, so not the credit enhancement
 
 
 def test_breakeven_ordering_and_boundary(deal):
@@ -86,7 +118,8 @@ def test_loss_grid_monotone_in_cdr(deal):
     for sev in {r["severity"] for r in rows}:
         seq = [r for r in rows if r["severity"] == sev]
         for x in TRANCHES:
-            vals = [r[f"loss_pct_{x}"] for r in seq]
+            # R is checked up to 30% CDR: beyond it write-downs retire the notes early and leftover reserve is released to R
+            vals = [r[f"loss_pct_{x}"] for r in seq if x != "R" or r["cdr"] <= 0.30]
             assert all(b >= a - 1e-9 for a, b in zip(vals, vals[1:]))
 
 

@@ -51,7 +51,7 @@ TRUSTEE_FEE = 0.0003
 RESERVE_INITIAL = 3_000_000.0  # funded at closing by the residual holder
 RESERVE_TARGET = 3_000_000.0
 
-# Principal paydown: "sequential" or "pro_rata" (pro rata reverts to sequential after any breach)
+# Principal paydown: "sequential" or "pro_rata" (pro rata switches to sequential permanently after the first breach)
 PRINCIPAL_MODE = "sequential"
 
 # Credit enhancement triggers
