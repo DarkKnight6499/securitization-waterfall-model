@@ -91,7 +91,8 @@ def retention_structure(deal: Deal, fv: dict) -> dict:
     first_loss, cum, need = {}, 0.0, p * deal.pool_balance
     for x in reversed(TRANCHES):
         first_loss[x] = 1.0 if cum < need else 0.0
-        cum += first_loss[x] * par[x]
+        # the reserve funding cannot absorb principal losses, so only residual principal counts toward 5%
+        cum += first_loss[x] * (par[x] - deal.reserve_initial if x == "R" else par[x])
     out[EU_FIRST_LOSS] = {"fractions": {**zero, **{x: first_loss[x] for x in NOTES}, "R1": first_loss["R"]},
                           "r2_par": 0.0}
     return out

@@ -203,7 +203,7 @@ def breakeven_probe(src: Path, work: Path, deal: Deal, tranche: str = "C") -> di
     return out
 
 
-def main(src: Path = EXCEL_PATH) -> dict:
+def main(src: Path = EXCEL_PATH, out_dir: Path = OUTPUT_DIR) -> dict:
     if find_soffice() is None:
         raise SystemExit("LibreOffice not found; cannot recalculate the workbook")
     deal = Deal()
@@ -240,8 +240,8 @@ def main(src: Path = EXCEL_PATH) -> dict:
     report = {"tolerances": {"usd": TOL_USD, "rate": TOL_RATE, "levered_irr": TOL_LEVERED, "fraction": TOL_RATIO},
               "scenarios": results, "breakeven_probe": probe,
               "all_passed": all(r["passed"] for r in results) and probe["passed"]}
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    (OUTPUT_DIR / "excel_reconciliation.json").write_text(json.dumps(report, indent=2, default=float))
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "excel_reconciliation.json").write_text(json.dumps(report, indent=2, default=float))
     shutil.rmtree(work, ignore_errors=True)
     print("ALL PASSED" if report["all_passed"] else "MISMATCH")
     return report

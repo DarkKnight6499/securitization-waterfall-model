@@ -81,8 +81,8 @@ def test_rep_lines_and_scenario_table_match_config(wb):
 
 
 @pytest.mark.skipif(find_soffice() is None, reason="LibreOffice not available")
-def test_excel_recalculation_reconciles_to_python():
-    report = reconcile_main(EXCEL_PATH)
+def test_excel_recalculation_reconciles_to_python(tmp_path):
+    report = reconcile_main(EXCEL_PATH, out_dir=tmp_path)  # keep the tracked report stable
     assert report["all_passed"], report
 
 

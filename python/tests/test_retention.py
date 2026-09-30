@@ -116,6 +116,15 @@ def test_eu_first_loss_adds_next_tranche_when_residual_is_under_five_percent(dea
     assert opt["retained_par"] >= 0.05 * small.pool_balance
 
 
+def test_eu_first_loss_tests_residual_principal_not_reserve_funding(deal):
+    tight = replace(deal, bal_c=42_000_000.0)  # residual par 21m, of which 18m principal (4.5% of pool)
+    assert tight.bal_r == pytest.approx(21_000_000.0)
+    fvs = fair_values(run_waterfall(tight, BASE_SCENARIO))
+    opt = retention_amounts(tight, fvs)["options"][EU_FIRST_LOSS]
+    assert opt["fractions"]["C"] == 1  # 4.5% principal is under-retention, so the next tranche is added
+    assert tight.bal_r - tight.reserve_initial < 0.05 * tight.pool_balance
+
+
 def test_us_horizontal_uses_fair_value_and_eu_uses_nominal(deal, fv):
     extra = retention_amounts(deal, fv)["extra"]
     assert extra["us_min_horizontal_fair_value"] == pytest.approx(0.05 * sum(fv.values()))

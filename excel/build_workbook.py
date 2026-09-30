@@ -548,7 +548,7 @@ def build(path=OUTPUT_PATH):
     # EU first loss: whole classes from the bottom until nominal covers 5% of pool
     need = f"{I['ret_pct']}*{I['pool_bal']}"
     R[f"{frac_col['r1']}{frac_row['eufl']}"] = f"=IF(0<{need},1,0)"
-    cum = f"{frac_col['r1']}{frac_row['eufl']}*{parc('r')}"
+    cum = f"{frac_col['r1']}{frac_row['eufl']}*({parc('r')}-{I['res_init']})"  # principal only, reserve cannot absorb losses
     for k in ("c", "b", "a"):
         R[f"{frac_col[k]}{frac_row['eufl']}"] = f"=IF({cum}<{need},1,0)"
         cum = f"{cum}+{frac_col[k]}{frac_row['eufl']}*{parc(k)}"
