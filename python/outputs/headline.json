@@ -134,13 +134,13 @@
         "R1": 1.0,
         "R2": 0.025
       },
-      "r2_par": 23903339.66481347,
-      "retained_par": 18944243.826806866,
-      "retained_fair_value": 19874031.483367436,
+      "r2_par": 23645319.132734697,
+      "retained_par": 19195813.84558367,
+      "retained_fair_value": 20125601.50214424,
       "horizontal_fair_value": 10062800.75107212,
-      "par_pct_of_all_interests": 0.04700804919803193,
-      "fv_pct_of_all_interests": 0.049375,
-      "par_pct_of_pool": 0.04736060956701717,
+      "par_pct_of_all_interests": 0.04763229242080315,
+      "fv_pct_of_all_interests": 0.05,
+      "par_pct_of_pool": 0.047989534613959176,
       "regulatory_measure": 0.05
     },
     "EU_VERTICAL": {

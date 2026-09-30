@@ -5,7 +5,7 @@ import pytest
 
 from waterfall import columns as C
 from waterfall.checks import run_checks
-from waterfall.config import BASE_SCENARIO, NOTES, SCENARIOS
+from waterfall.config import BASE_SCENARIO, NOTES, SCENARIOS, Scenario
 from waterfall.waterfall import run_waterfall
 
 SEVERE = [s for s in SCENARIOS if s.name == "Severe stress"][0]
@@ -23,7 +23,7 @@ def test_all_integrity_checks_pass(runs, scen):
 def test_notes_never_paid_more_than_collateral_cash_plus_reserve_draw(runs, scen):
     r = runs[scen.name]
     paid = r[C.NOTES_PAID_TOTAL] + r[C.FEE_PAID]
-    assert (paid <= r[C.POOL_CASH] + r[C.RES_DRAW] + 1e-6).all()
+    assert (paid <= r[C.POOL_CASH] + r[C.RES_DRAW] + r[C.RES_RELEASE] + 1e-6).all()
 
 
 @pytest.mark.parametrize("scen", SCENARIOS, ids=lambda s: s.name)
@@ -204,3 +204,52 @@ def test_interest_shortfalls_carry_forward(deal):
 
 def test_residual_par_includes_reserve(deal):
     assert deal.bal_r == deal.pool_balance + deal.reserve_initial - deal.bal_a - deal.bal_b - deal.bal_c
+
+
+ARREARS_SCENARIOS = (*SCENARIOS, Scenario("Late-default repro", 0.02, 0.18, 0.20, 12),
+                     Scenario("Severity 70 CDR 40", 0.10, 0.40, 0.70, 6))
+
+
+def _arrears(r):
+    return sum(r[C.tr(x, C.INT_SHORT)] for x in NOTES) + r[C.FEE_SHORT]
+
+
+@pytest.mark.parametrize("scen", ARREARS_SCENARIOS, ids=lambda s: s.name)
+def test_residual_is_never_paid_while_fees_or_note_interest_are_unpaid(deal, scen):
+    r = run_waterfall(deal, scen)
+    owed = _arrears(r)
+    assert ((r[C.RESID_CASH] > 0.005) & (owed > 0.005)).sum() == 0
+    assert ((r[C.RES_RELEASE_R] > 0.005) & (owed > 0.005)).sum() == 0
+    assert np.abs(r[C.CASH_CHECK]).max() < 1e-6
+    assert run_checks(r)["passed"]
+
+
+def test_late_default_repro_pays_class_c_interest_before_the_residual(deal):
+    r = run_waterfall(deal, Scenario("Late-default repro", 0.02, 0.18, 0.20, 12))
+    arr_c = r[C.tr("C", C.ARR)]
+    assert arr_c.sum() > 0 and r[C.tr("C", C.INT_SHORT)][-1] < 0.005
+    first = np.where(arr_c > 0)[0][0]
+    assert r[C.RESID_CASH][first] == 0 or _arrears(r)[first] < 1e-6
+
+
+def test_stress_release_settles_class_c_interest_instead_of_going_to_the_residual(deal):
+    r = run_waterfall(deal, STRESS)
+    assert r[C.tr("C", C.ARR)].sum() == pytest.approx(818.18, abs=0.01)
+    assert r[C.tr("C", C.INT_SHORT)][-1] < 1e-6
+    assert r[C.RES_RELEASE_R].sum() == pytest.approx(r[C.RES_RELEASE].sum() - 818.18, abs=0.01)
+
+
+def test_severe_stress_release_goes_to_carried_interest_and_residual_gets_nothing_while_owed(deal):
+    r = run_waterfall(deal, SEVERE)
+    assert r[C.RES_RELEASE_R].sum() < 1e-6 and r[C.RES_RELEASE].sum() > 0
+    assert r[C.tr("C", C.INT_SHORT)][-1] > 0  # cash ran out before the arrears were cleared
+
+
+def test_sweep_order_is_fees_then_a_then_b_then_c(deal):
+    r = run_waterfall(deal, SEVERE)
+    for t in range(1, len(r[C.PERIOD])):
+        later_paid = [r[C.tr(x, C.ARR)][t] for x in NOTES]
+        if later_paid[1] > 0:
+            assert r[C.tr("A", C.INT_SHORT)][t] < 1e-6
+        if later_paid[2] > 0:
+            assert r[C.tr("B", C.INT_SHORT)][t] < 1e-6 and r[C.tr("A", C.INT_SHORT)][t] < 1e-6

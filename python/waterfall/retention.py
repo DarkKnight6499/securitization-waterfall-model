@@ -79,12 +79,13 @@ def retention_structure(deal: Deal, fv: dict) -> dict:
     req_h = p * total_fv
     flags = _whole_class_flags(fv, req_h)
     out[RR_HORIZONTAL] = {"fractions": {**zero, **flags, "R1": 1.0 if req_h > 0 else 0.0},
-                          "r2_par": residual_carve_out(fv, req_h)}
-    req_l = (p - v) * total_fv
+                          "r2_par": residual_carve_out(fv, req_h), "hz_notes": flags}
+    # the vertical share v includes v of R1 (a separate class), so only (1 - v) of the horizontal classes counts
+    req_l = (p - v) * total_fv / (1.0 - v)
     flags_l = _whole_class_flags(fv, req_l)
     out[RR_LSHAPED] = {"fractions": {**{x: max(v, flags_l[x]) for x in NOTES}, "R1": 1.0 if req_l > 0 else 0.0,
                                      "R2": v},
-                       "r2_par": residual_carve_out(fv, req_l)}
+                       "r2_par": residual_carve_out(fv, req_l), "hz_notes": flags_l}
     out[EU_VERTICAL] = {"fractions": {**zero, **{x: (p if x in deal.eu_sold else 0.0) for x in NOTES},
                                       "R1": p if "R" in deal.eu_sold else 0.0}, "r2_par": 0.0}
     first_loss, cum, need = {}, 0.0, p * deal.pool_balance
@@ -118,8 +119,13 @@ def retention_amounts(deal: Deal, fv: dict) -> dict:
             "r2_par": r2,
             "retained_par": sum(f[x] * par[x] for x in RET_CLASSES),
             "retained_fair_value": sum(f[x] * class_fv[x] for x in RET_CLASSES),
-            "horizontal_fair_value": f["R1"] * class_fv["R1"] if opt in (RR_HORIZONTAL, RR_LSHAPED) else 0.0,
+            "horizontal_fair_value": 0.0,
         }
+        if opt in (RR_HORIZONTAL, RR_LSHAPED):
+            hz = structure[opt]["hz_notes"]
+            share = 1.0 - (deal.lshape_vertical if opt == RR_LSHAPED else 0.0)  # vertical slice is not horizontal
+            rows[opt]["horizontal_fair_value"] = share * (f["R1"] * class_fv["R1"]
+                                                          + sum(hz[x] * class_fv[x] for x in NOTES))
         rows[opt]["par_pct_of_all_interests"] = rows[opt]["retained_par"] / total_par
         rows[opt]["fv_pct_of_all_interests"] = rows[opt]["retained_fair_value"] / total_fv
         rows[opt]["par_pct_of_pool"] = rows[opt]["retained_par"] / deal.pool_balance

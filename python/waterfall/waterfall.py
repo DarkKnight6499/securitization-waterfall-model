@@ -30,7 +30,9 @@ def run_waterfall(deal: Deal, scen: Scenario) -> dict:
     Steps 1 to 10 run on interest collections only. The reserve then draws exactly the fees, Class A
     interest and Class B interest still unpaid and pays those items directly, so a draw is never
     swept into turbo or principal. Principal priority: regular principal collections to A, B, C,
-    then any excess to the residual. The pro rata mode is a latching switch: after the first
+    then any excess to the residual, except that once the notes are retired that excess and the reserve
+    release first pay carried fees and A, B, C interest (EHRI condition 2: shortfalls hit the residual
+    before any other interest). The pro rata mode is a latching switch: after the first
     breach every later period is sequential, even if the tests cure. The index for period t is
     fwd[t], the curve value at the end of month t (the payment date), applied to the beginning
     balance with a 30/360 monthly convention (rate / 12).
@@ -43,12 +45,12 @@ def run_waterfall(deal: Deal, scen: Scenario) -> dict:
     z = lambda: np.zeros(n + 1)  # noqa: E731
 
     for tranche in NOTES:
-        for f in (C.BEG, C.INT_ACC, C.INT_DUE, C.INT_PAID, C.INT_SHORT, C.CPN, C.REG, C.PF,
+        for f in (C.BEG, C.INT_ACC, C.INT_DUE, C.INT_PAID, C.INT_SHORT, C.ARR, C.CPN, C.REG, C.PF,
                   C.PRIN, C.WD, C.END, C.X, C.OC, C.IC, C.BREACH):
             res[C.tr(tranche, f)] = z()
     for k in (C.FEE_DUE, C.FEE_PAID, C.FEE_SHORT, C.INT_COLL, C.RES_BEG, C.RES_DRAW, C.RES_DRAW_FEE,
               C.RES_DRAW_A, C.RES_DRAW_B, C.RES_TOPUP,
-              C.RES_RELEASE, C.RES_END, C.AIF, C.APF, C.SEQ_FLAG, C.TURBO_TOTAL, C.TURBO_A,
+              C.RES_RELEASE, C.RES_RELEASE_R, C.ARR_FEE, C.RES_END, C.AIF, C.APF, C.SEQ_FLAG, C.TURBO_TOTAL, C.TURBO_A,
               C.TURBO_B, C.TURBO_C, C.PDL_PRE, C.DEFICIENCY, C.RESID_INT, C.RESID_PRIN,
               C.RESID_CASH, C.RETIRED, C.EXCESS_SPREAD, C.EXCESS_SPREAD_BPS, C.BREACH_ANY,
               C.CASH_CHECK, C.NOTES_PAID_TOTAL, *C.TURBO_STEPS):
@@ -157,7 +159,22 @@ def run_waterfall(deal: Deal, scen: Scenario) -> dict:
         topup = 0.0 if retired else min(rem, max(0.0, deal.reserve_target - res_after))
         release = res_after if retired else 0.0
         rem -= topup
-        resid_cash = rem + r_prin + release
+        # once the notes retire, principal collections and the reserve release settle carried fees and
+        # note interest (A, B, C) before the residual gets anything
+        sweep_left = r_prin + release if retired else 0.0
+        arr_fee = min(sweep_left, fee_due - fees_paid)
+        sweep_left -= arr_fee
+        arr = {}
+        for x in NOTES:
+            arr[x] = min(sweep_left, due[x] - paid[x])
+            sweep_left -= arr[x]
+        fees_paid += arr_fee
+        paid = {x: paid[x] + arr[x] for x in NOTES}
+        sweep = arr_fee + sum(arr.values())
+        take_prin = min(r_prin, sweep)
+        r_prin -= take_prin
+        release_r = release - (sweep - take_prin)
+        resid_cash = rem + r_prin + release_r
 
         # store
         for x in NOTES:
@@ -167,6 +184,7 @@ def run_waterfall(deal: Deal, scen: Scenario) -> dict:
             res[C.tr(x, C.INT_DUE)][t] = due[x]
             res[C.tr(x, C.INT_PAID)][t] = paid[x]
             res[C.tr(x, C.INT_SHORT)][t] = due[x] - paid[x]
+            res[C.tr(x, C.ARR)][t] = arr[x]
             res[C.tr(x, C.REG)][t] = reg[x]
             res[C.tr(x, C.PF)][t] = pf[x]
             res[C.tr(x, C.PRIN)][t] = reg[x] + turbo[x]
@@ -182,6 +200,8 @@ def run_waterfall(deal: Deal, scen: Scenario) -> dict:
         res[C.RES_DRAW_FEE][t], res[C.RES_DRAW_A][t], res[C.RES_DRAW_B][t] = d_fee, d_a, d_b
         res[C.RES_TOPUP][t] = topup
         res[C.RES_RELEASE][t] = release
+        res[C.RES_RELEASE_R][t] = release_r
+        res[C.ARR_FEE][t] = arr_fee
         res[C.RES_END][t] = res_after + topup - release
         res[C.AIF][t] = aif
         res[C.APF][t] = apf

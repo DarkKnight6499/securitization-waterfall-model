@@ -44,14 +44,15 @@ def chart_loss_vs_subordination(results: list):
         ax.plot(res[C.PERIOD], res[C.POOL_CUM_LOSS] / pool * 100, label=res["scenario"].name)
     for x, lvl in sub.items():
         ax.axhline(lvl * 100, color=TRANCHE_COLORS[x], linestyle=":")
-        below = x == "B"  # the Stress curve hugs the B line from above, so its label goes underneath
-        ax.text(res[C.PERIOD][-1], lvl * 100, f" Class {x} principal subordination {lvl:.2%}",
-                va="top" if below else "bottom", ha="right", color=TRANCHE_COLORS[x], fontsize=8)
+        # right-hand labels sit in the gaps between the flat tails of the curves; B goes under its line
+        ax.annotate(f"Class {x} principal subordination {lvl:.2%}", (res[C.PERIOD][-1], lvl * 100),
+                    xytext=(-2, -4 if x == "B" else 4), textcoords="offset points", va="top" if x == "B" else "bottom",
+                    ha="right", color=TRANCHE_COLORS[x], fontsize=8)
     ax.set_xlabel("Month")
     ax.set_ylabel("Cumulative net loss (% of original pool)")
     ax.set_title(f"Reserve account ({deal.reserve_initial / pool:.2%} of pool) is liquidity only, excluded from subordination",
                  fontsize=8)
-    ax.legend(fontsize=8)
+    ax.legend(fontsize=8, loc="upper center", bbox_to_anchor=(0.5, -0.14), ncol=4)
     ax.grid(alpha=0.3)
     return _save(fig, "cumulative_loss_vs_subordination.png")
 

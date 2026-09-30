@@ -18,7 +18,9 @@
         "retention_fractions": 0.0,
         "retention_rates": 4.093947403305265e-15,
         "levered_irr": 5.909023270689318e-13,
-        "unpaid_interest_usd": 0.0
+        "unpaid_interest_usd": 0.0,
+        "arrears_sweep_usd": 7.084056858109602e-12,
+        "residual_cash_usd": 4.889443516731262e-09
       },
       "checks": {
         "reserve_draw_alloc": 0.0,
@@ -77,8 +79,10 @@
         "retention_usd": 5.029141902923584e-08,
         "retention_fractions": 0.0,
         "retention_rates": 2.3108598368182243e-12,
-        "levered_irr": 6.302684069092734e-15,
-        "unpaid_interest_usd": 0.0
+        "levered_irr": 6.312658729079601e-15,
+        "unpaid_interest_usd": 0.0,
+        "arrears_sweep_usd": 5.5794424056915984e-12,
+        "residual_cash_usd": 3.4924596548080444e-09
       },
       "checks": {
         "reserve_draw_alloc": 0.0,
@@ -118,7 +122,7 @@
         "R": {
           "excel_wal": 6.1843806807979,
           "py_wal": 6.184380680797902,
-          "excel_yield": 0.00578781980677037,
+          "excel_yield": 0.00578781980677036,
           "py_yield": 0.005787819806769345,
           "excel_loss": 0.0,
           "py_loss": 0.0
@@ -136,16 +140,18 @@
         "fair_value_usd": 1.1920928955078125e-07,
         "retention_usd": 5.029141902923584e-08,
         "retention_fractions": 0.0,
-        "retention_rates": 1.4552803406786552e-12,
+        "retention_rates": 5.10702591327572e-15,
         "levered_irr": 2.518818487118324e-14,
-        "unpaid_interest_usd": 5.268248060019687e-10
+        "unpaid_interest_usd": 3.205968823749572e-11,
+        "arrears_sweep_usd": 3.637978807091713e-11,
+        "residual_cash_usd": 3.725290298461914e-09
       },
       "checks": {
         "reserve_draw_alloc": 0.0,
         "labels_match": true,
         "any_shortfall_flags_match": true,
         "pool_recon_sum_abs": 1.09497244235843e-11,
-        "cash_conservation_sum_abs": 1.3790213415632e-10,
+        "cash_conservation_sum_abs": 3.97790245187935e-10,
         "notes_over_cash_sum": 0.0,
         "breach_months_excel": 87.0,
         "breach_months_python": 87.0
@@ -170,18 +176,18 @@
         "C": {
           "excel_wal": 5.69255609644918,
           "py_wal": 5.692556096449178,
-          "excel_yield": -0.0521214109037306,
-          "py_yield": -0.05212141090372957,
+          "excel_yield": -0.0521124964236213,
+          "py_yield": -0.052112496423622146,
           "excel_loss": 15884876.0158681,
           "py_loss": 15884876.015868029
         },
         "R": {
           "excel_wal": 7.75,
           "py_wal": 7.75,
-          "excel_yield": -0.278675628292177,
-          "py_yield": -0.27867562829217607,
-          "excel_loss": 24166168.3753367,
-          "py_loss": 24166168.37533672
+          "excel_yield": -0.278709705844742,
+          "py_yield": -0.27870970584474253,
+          "excel_loss": 24166986.5520845,
+          "py_loss": 24166986.552084543
         }
       },
       "passed": true
@@ -196,16 +202,18 @@
         "fair_value_usd": 3.166496753692627e-08,
         "retention_usd": 5.029141902923584e-08,
         "retention_fractions": 0.0,
-        "retention_rates": 1.5210055437364645e-14,
+        "retention_rates": 8.010259122670504e-14,
         "levered_irr": 0.0,
-        "unpaid_interest_usd": 4.889443516731262e-09
+        "unpaid_interest_usd": 4.889443516731262e-09,
+        "arrears_sweep_usd": 2.3283064365386963e-10,
+        "residual_cash_usd": 3.026798367500305e-09
       },
       "checks": {
         "reserve_draw_alloc": 0.0,
         "labels_match": true,
         "any_shortfall_flags_match": true,
         "pool_recon_sum_abs": 3.38438369194831e-12,
-        "cash_conservation_sum_abs": 3.16163095703814e-10,
+        "cash_conservation_sum_abs": 2.71370481641497e-10,
         "notes_over_cash_sum": 0.0,
         "breach_months_excel": 94.0,
         "breach_months_python": 94.0
@@ -230,18 +238,18 @@
         "C": {
           "excel_wal": NaN,
           "py_wal": NaN,
-          "excel_yield": NaN,
-          "py_yield": NaN,
+          "excel_yield": -0.420730449833254,
+          "py_yield": -0.4207304498332538,
           "excel_loss": 30000000.0,
           "py_loss": 30000000.0
         },
         "R": {
-          "excel_wal": 8.0,
-          "py_wal": 8.0,
-          "excel_yield": -0.428418351084014,
-          "py_yield": -0.4284183510840138,
-          "excel_loss": 30033023.5623531,
-          "py_loss": 30033023.56235306
+          "excel_wal": NaN,
+          "py_wal": NaN,
+          "excel_yield": NaN,
+          "py_yield": NaN,
+          "excel_loss": 30974303.9033024,
+          "py_loss": 30974303.903302446
         }
       },
       "passed": true
@@ -258,7 +266,9 @@
         "retention_fractions": 0.0,
         "retention_rates": 1.8818280267396403e-14,
         "levered_irr": 7.586986594532164e-13,
-        "unpaid_interest_usd": 0.0
+        "unpaid_interest_usd": 0.0,
+        "arrears_sweep_usd": 1.195326967536196e-12,
+        "residual_cash_usd": 5.122274160385132e-09
       },
       "checks": {
         "reserve_draw_alloc": 0.0,
@@ -318,7 +328,9 @@
         "retention_fractions": 0.0,
         "retention_rates": 2.220446049250313e-15,
         "levered_irr": 3.741711801508174e-14,
-        "unpaid_interest_usd": 0.0
+        "unpaid_interest_usd": 0.0,
+        "arrears_sweep_usd": 5.5794424056915984e-12,
+        "residual_cash_usd": 5.122274160385132e-09
       },
       "checks": {
         "reserve_draw_alloc": 0.0,
@@ -374,11 +386,13 @@
         "wal_years": 5.329070518200751e-15,
         "yield": 9.85878045867139e-13,
         "fair_value_usd": 5.960464477539063e-08,
-        "retention_usd": 7.450580596923828e-08,
+        "retention_usd": 4.470348358154297e-08,
         "retention_fractions": 0.0,
         "retention_rates": 4.191091917959966e-15,
         "levered_irr": 5.910966160982412e-13,
-        "unpaid_interest_usd": 0.0
+        "unpaid_interest_usd": 0.0,
+        "arrears_sweep_usd": 9.146873286490619e-12,
+        "residual_cash_usd": 4.423782229423523e-09
       },
       "checks": {
         "reserve_draw_alloc": 0.0,
@@ -433,19 +447,21 @@
         "usd_totals": 7.450580596923828e-08,
         "wal_years": 7.105427357601002e-15,
         "yield": 2.8958987985383544e-12,
-        "fair_value_usd": 1.4901161193847656e-08,
+        "fair_value_usd": 1.862645149230957e-08,
         "retention_usd": 5.029141902923584e-08,
         "retention_fractions": 0.0,
-        "retention_rates": 1.4552803406786552e-12,
+        "retention_rates": 5.10702591327572e-15,
         "levered_irr": 2.568778523226456e-14,
-        "unpaid_interest_usd": 5.268248060019687e-10
+        "unpaid_interest_usd": 3.205968823749572e-11,
+        "arrears_sweep_usd": 3.637978807091713e-11,
+        "residual_cash_usd": 4.6566128730773926e-09
       },
       "checks": {
         "reserve_draw_alloc": 0.0,
         "labels_match": true,
         "any_shortfall_flags_match": true,
         "pool_recon_sum_abs": 1.09497244235843e-11,
-        "cash_conservation_sum_abs": 1.3790213415632e-10,
+        "cash_conservation_sum_abs": 3.97790245187935e-10,
         "notes_over_cash_sum": 0.0,
         "breach_months_excel": 87.0,
         "breach_months_python": 87.0
@@ -470,18 +486,18 @@
         "C": {
           "excel_wal": 4.35789036041557,
           "py_wal": 4.3578903604155705,
-          "excel_yield": -0.0680245436335869,
-          "py_yield": -0.06802454363357469,
+          "excel_yield": -0.0680131585239081,
+          "py_yield": -0.06801315852389567,
           "excel_loss": 15231134.9934949,
           "py_loss": 15231134.993494825
         },
         "R": {
           "excel_wal": 7.75,
           "py_wal": 7.749999999999993,
-          "excel_yield": -0.27853015975968,
-          "py_yield": -0.2785301597596803,
-          "excel_loss": 24138361.2635306,
-          "py_loss": 24138361.263530612
+          "excel_yield": -0.278564235415631,
+          "py_yield": -0.2785642354156306,
+          "excel_loss": 24139179.4402784,
+          "py_loss": 24139179.440278433
         }
       },
       "passed": true
@@ -498,7 +514,9 @@
         "retention_fractions": 0.0,
         "retention_rates": 5.10702591327572e-15,
         "levered_irr": 3.7041984063401756e-14,
-        "unpaid_interest_usd": 1.862645149230957e-09
+        "unpaid_interest_usd": 1.862645149230957e-09,
+        "arrears_sweep_usd": 5.5794424056915984e-12,
+        "residual_cash_usd": 3.725290298461914e-09
       },
       "checks": {
         "reserve_draw_alloc": 0.0,
@@ -542,6 +560,130 @@
           "py_yield": -0.10998910692546082,
           "excel_loss": 15340399.7864517,
           "py_loss": 15340399.786451746
+        }
+      },
+      "passed": true
+    },
+    {
+      "scenario": "Late-default repro",
+      "worst_abs_diff": {
+        "cash_flow_usd": 4.470348358154297e-08,
+        "usd_totals": 4.284083843231201e-08,
+        "wal_years": 2.6645352591003757e-15,
+        "yield": 1.2611439670351388e-12,
+        "fair_value_usd": 1.1920928955078125e-07,
+        "retention_usd": 5.029141902923584e-08,
+        "retention_fractions": 0.0,
+        "retention_rates": 1.921955650185936e-12,
+        "levered_irr": 2.7751021966504474e-14,
+        "unpaid_interest_usd": 3.4924596548080444e-10,
+        "arrears_sweep_usd": 8.731149137020111e-11,
+        "residual_cash_usd": 2.9103830456733704e-09
+      },
+      "checks": {
+        "reserve_draw_alloc": 0.0,
+        "labels_match": true,
+        "any_shortfall_flags_match": true,
+        "pool_recon_sum_abs": 5.70982443261936e-12,
+        "cash_conservation_sum_abs": 0.0,
+        "notes_over_cash_sum": 0.0,
+        "breach_months_excel": 39.0,
+        "breach_months_python": 39.0
+      },
+      "detail": {
+        "A": {
+          "excel_wal": 1.81436191583738,
+          "py_wal": 1.8143619158373827,
+          "excel_yield": 0.049812318529136,
+          "py_yield": 0.04981231852913792,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "B": {
+          "excel_wal": 4.05262215594652,
+          "py_wal": 4.052622155946523,
+          "excel_yield": 0.0595713506021846,
+          "py_yield": 0.059571350602447115,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "C": {
+          "excel_wal": 5.17995627143463,
+          "py_wal": 5.179956271434628,
+          "excel_yield": 0.0749329961239061,
+          "py_yield": 0.07493299612516724,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "R": {
+          "excel_wal": 6.67131488700594,
+          "py_wal": 6.67131488700594,
+          "excel_yield": -0.1847528544853,
+          "py_yield": -0.1847528544853001,
+          "excel_loss": 13620691.8490329,
+          "py_loss": 13620691.849032857
+        }
+      },
+      "passed": true
+    },
+    {
+      "scenario": "Severity 70 CDR 40",
+      "worst_abs_diff": {
+        "cash_flow_usd": 5.029141902923584e-08,
+        "usd_totals": 1.7881393432617188e-07,
+        "wal_years": 1.9984014443252818e-15,
+        "yield": 5.028755190039647e-13,
+        "fair_value_usd": 2.9802322387695312e-08,
+        "retention_usd": 5.029141902923584e-08,
+        "retention_fractions": 0.0,
+        "retention_rates": 1.0269562977782698e-15,
+        "levered_irr": 0.0,
+        "unpaid_interest_usd": 3.4924596548080444e-10,
+        "arrears_sweep_usd": 3.4924596548080444e-10,
+        "residual_cash_usd": 3.4924596548080444e-10
+      },
+      "checks": {
+        "reserve_draw_alloc": 0.0,
+        "labels_match": true,
+        "any_shortfall_flags_match": true,
+        "pool_recon_sum_abs": 4.20331438697462e-13,
+        "cash_conservation_sum_abs": 2.52256882049551e-10,
+        "notes_over_cash_sum": 0.0,
+        "breach_months_excel": 89.0,
+        "breach_months_python": 89.0
+      },
+      "detail": {
+        "A": {
+          "excel_wal": 1.43550471348385,
+          "py_wal": 1.435504713483848,
+          "excel_yield": -0.0771750758430571,
+          "py_yield": -0.07717507584255423,
+          "excel_loss": 55383429.3917429,
+          "py_loss": 55383429.39174293
+        },
+        "B": {
+          "excel_wal": NaN,
+          "py_wal": NaN,
+          "excel_yield": -3.65573268552059,
+          "py_yield": -3.655732685520588,
+          "excel_loss": 40000000.0,
+          "py_loss": 40000000.0
+        },
+        "C": {
+          "excel_wal": NaN,
+          "py_wal": NaN,
+          "excel_yield": -0.472854005244441,
+          "py_yield": -0.472854005244441,
+          "excel_loss": 30000000.0,
+          "py_loss": 30000000.0
+        },
+        "R": {
+          "excel_wal": 7.5,
+          "py_wal": 7.5,
+          "excel_yield": -0.56479220277346,
+          "py_yield": -0.5647922027734606,
+          "excel_loss": 31612399.3672137,
+          "py_loss": 31612399.36721374
         }
       },
       "passed": true

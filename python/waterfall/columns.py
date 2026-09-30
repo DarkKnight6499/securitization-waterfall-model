@@ -29,6 +29,8 @@ RES_DRAW_A = "reserve_draw_to_A_interest"
 RES_DRAW_B = "reserve_draw_to_B_interest"
 RES_TOPUP = "reserve_topup"
 RES_RELEASE = "reserve_release"
+RES_RELEASE_R = "reserve_release_to_residual"
+ARR_FEE = "arrears_paid_fees"
 RES_END = "reserve_end"
 AIF = "available_interest_funds"
 APF = "available_principal_funds"
@@ -58,6 +60,7 @@ def tr(tranche: str, field: str) -> str:
 
 BEG, INT_ACC, INT_DUE, INT_PAID, INT_SHORT = "beg", "int_accrued", "int_due", "int_paid", "int_shortfall"
 CPN, REG, PF, PRIN, WD, END, X = "coupon", "regular_principal", "pf_balance", "principal_paid", "writedown", "end", "post_turbo"
+ARR = "arrears_paid"
 OC, IC, BREACH = "oc_ratio", "ic_ratio", "breach"
 CF = "cash_flow"
 

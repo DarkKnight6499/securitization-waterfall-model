@@ -124,7 +124,7 @@ class Series:
 
 def irr12(rng):
     """Annualized monthly IRR with fallback guesses so deep-loss tranches still solve."""
-    return (f'=IFERROR(12*IRR({rng},0.005),IFERROR(12*IRR({rng},-0.03),IFERROR(12*IRR({rng},-0.1),"n/a")))')
+    return (f'=IFERROR(12*IRR({rng},0.005),IFERROR(12*IRR({rng},-0.03),IFERROR(12*IRR({rng},-0.1),IFERROR(12*IRR({rng},-0.3),"n/a"))))')
 
 
 def build(path=OUTPUT_PATH):
@@ -312,8 +312,8 @@ def build(path=OUTPUT_PATH):
     W.add("t2", "5 Turbo (B test breach)", None,
           lambda r: f"=IF({Tt.x('br_b', r)}=1,MIN({W.a('rem4', r)},{W.a('pf_tot', r)}-{W.a('t1', r)}),0)")
     W.add("rem5", "Remaining after turbo 2", None, lambda r: f"={W.a('rem4', r)}-{W.a('t2', r)}")
-    W.add("paid_c", "6 C interest paid", None, lambda r: f"=MIN({W.a('due_c', r)},{W.a('rem5', r)})")
-    W.add("rem6", "Remaining after C int", None, lambda r: f"={W.a('rem5', r)}-{W.a('paid_c', r)}")
+    W.add("paid_c_c", "6 C interest paid from collections", None, lambda r: f"=MIN({W.a('due_c', r)},{W.a('rem5', r)})")
+    W.add("rem6", "Remaining after C int", None, lambda r: f"={W.a('rem5', r)}-{W.a('paid_c_c', r)}")
     W.add("t3", "7 Turbo (C test breach)", None,
           lambda r: f"=IF({Tt.x('br_c', r)}=1,MIN({W.a('rem6', r)},{W.a('pf_tot', r)}-{W.a('t1', r)}-{W.a('t2', r)}),0)")
     W.add("rem7", "Remaining after turbo 3", None, lambda r: f"={W.a('rem6', r)}-{W.a('t3', r)}")
@@ -327,9 +327,6 @@ def build(path=OUTPUT_PATH):
           lambda r: f"=MIN({W.a('draw', r)}-{W.a('d_fee', r)},{W.a('due_a', r)}-{W.a('paid_a_c', r)})")
     W.add("d_b", "Reserve draw applied to B interest", None,
           lambda r: f"=MIN({W.a('due_b', r)}-{W.a('paid_b_c', r)},{W.a('draw', r)}-{W.a('d_fee', r)}-{W.a('d_a', r)})")
-    W.add("fees_paid", "Senior fees paid (collections + reserve)", None, lambda r: f"={W.a('fees_c', r)}+{W.a('d_fee', r)}")
-    W.add("paid_a", "A interest paid (collections + reserve)", None, lambda r: f"={W.a('paid_a_c', r)}+{W.a('d_a', r)}")
-    W.add("paid_b", "B interest paid (collections + reserve)", None, lambda r: f"={W.a('paid_b_c', r)}+{W.a('d_b', r)}")
     W.add("turbo", "Turbo total", None,
           lambda r: f"={W.a('t1', r)}+{W.a('t2', r)}+{W.a('t3', r)}+{W.a('t4', r)}")
     W.add("turbo_a", "Turbo to A", None, lambda r: f"=MIN({W.a('pf_a', r)},{W.a('turbo', r)})")
@@ -353,11 +350,36 @@ def build(path=OUTPUT_PATH):
     W.add("topup", "9 Reserve top-up", None,
           lambda r: f"=IF({W.a('retired', r)}=1,0,MIN({W.a('rem8', r)},MAX(0,{I['res_target']}-{W.a('res_after', r)})))")
     W.add("release", "Reserve release", None, lambda r: f"=IF({W.a('retired', r)}=1,{W.a('res_after', r)},0)")
+    # once the notes retire, principal collections and the reserve release settle carried fees and A, B, C interest before the residual
+    W.add("sweep_avail", "Arrears sweep capacity (principal to residual + release, once retired)", None,
+          lambda r: f"=IF({W.a('retired', r)}=1,{W.a('r_prin', r)}+{W.a('release', r)},0)")
+    W.add("arr_fee", "Carried fees paid from sweep", None,
+          lambda r: f"=MIN({W.a('sweep_avail', r)},{W.a('fee_due', r)}-{W.a('fees_c', r)}-{W.a('d_fee', r)})")
+    W.add("arr_a", "Carried A interest paid from sweep", None,
+          lambda r: f"=MIN({W.a('sweep_avail', r)}-{W.a('arr_fee', r)},{W.a('due_a', r)}-{W.a('paid_a_c', r)}-{W.a('d_a', r)})")
+    W.add("arr_b", "Carried B interest paid from sweep", None,
+          lambda r: f"=MIN({W.a('sweep_avail', r)}-{W.a('arr_fee', r)}-{W.a('arr_a', r)},{W.a('due_b', r)}-{W.a('paid_b_c', r)}-{W.a('d_b', r)})")
+    W.add("arr_c", "Carried C interest paid from sweep", None,
+          lambda r: f"=MIN({W.a('sweep_avail', r)}-{W.a('arr_fee', r)}-{W.a('arr_a', r)}-{W.a('arr_b', r)},{W.a('due_c', r)}-{W.a('paid_c_c', r)})")
+    W.add("sweep", "Arrears sweep total", None,
+          lambda r: f"={W.a('arr_fee', r)}+{W.a('arr_a', r)}+{W.a('arr_b', r)}+{W.a('arr_c', r)}")
+    W.add("r_prin_net", "Principal to residual after arrears", None,
+          lambda r: f"={W.a('r_prin', r)}-MIN({W.a('r_prin', r)},{W.a('sweep', r)})")
+    W.add("release_r", "Reserve release to residual after arrears", None,
+          lambda r: f"={W.a('release', r)}-({W.a('sweep', r)}-MIN({W.a('r_prin', r)},{W.a('sweep', r)}))")
+    W.add("fees_paid", "Senior fees paid (collections + reserve + sweep)", None,
+          lambda r: f"={W.a('fees_c', r)}+{W.a('d_fee', r)}+{W.a('arr_fee', r)}")
+    W.add("paid_a", "A interest paid (collections + reserve + sweep)", None,
+          lambda r: f"={W.a('paid_a_c', r)}+{W.a('d_a', r)}+{W.a('arr_a', r)}")
+    W.add("paid_b", "B interest paid (collections + reserve + sweep)", None,
+          lambda r: f"={W.a('paid_b_c', r)}+{W.a('d_b', r)}+{W.a('arr_b', r)}")
+    W.add("paid_c", "C interest paid (collections + sweep)", None,
+          lambda r: f"={W.a('paid_c_c', r)}+{W.a('arr_c', r)}")
     W.add("res_end", "Reserve end", f"={I['res_init']}",
           lambda r: f"={W.a('res_after', r)}+{W.a('topup', r)}-{W.a('release', r)}")
     W.add("resid_int", "10 Residual interest distribution", None, lambda r: f"={W.a('rem8', r)}-{W.a('topup', r)}")
     W.add("resid_cash", "Residual cash (int + prin + release)", None,
-          lambda r: f"={W.a('resid_int', r)}+{W.a('r_prin', r)}+{W.a('release', r)}")
+          lambda r: f"={W.a('resid_int', r)}+{W.a('r_prin_net', r)}+{W.a('release_r', r)}")
     for k in TR:
         W.add(f"prin_{k}", f"{k.upper()} principal paid", None,
               lambda r, k=k: f"={W.a(f'reg_{k}', r)}+{W.a(f'turbo_{k}', r)}")
@@ -409,7 +431,7 @@ def build(path=OUTPUT_PATH):
         CF.add(f"cf_{k}", f"{K} cash flow", lambda r, k=k: f"=-{I[f'bal_{k}']}",
                lambda r, k=k: f"={CF.a(f'int_{k}', r)}+{CF.a(f'prin_{k}', r)}")
     CF.add("int_r", "R interest distribution", None, lambda r: f"={W.x('resid_int', r)}")
-    CF.add("prin_r", "R principal + reserve release", None, lambda r: f"={W.x('r_prin', r)}+{W.x('release', r)}")
+    CF.add("prin_r", "R principal + reserve release", None, lambda r: f"={W.x('r_prin_net', r)}+{W.x('release_r', r)}")
     CF.add("cf_r", "R cash flow", lambda r: f"=-{I['bal_r']}", lambda r: f"={CF.a('int_r', r)}+{CF.a('prin_r', r)}")
     CF.add("fwd", "Forward index", lambda r: f"={P.x('fwd', r)}", lambda r: f"={P.x('fwd', r)}", PCT)
 
@@ -511,7 +533,7 @@ def build(path=OUTPUT_PATH):
     R[f"{frac_col['r1']}{frac_row['rrv']}"] = f"={I['ret_pct']}"
     R[f"{frac_col['r1']}{frac_row['euv']}"] = f"={I['ret_pct']}*{I['eu_sold_r']}"
     req_h = f"{I['ret_pct']}*$C$10"
-    req_l = f"({I['ret_pct']}-{I['lshape_v']})*$C$10"
+    req_l = f"({I['ret_pct']}-{I['lshape_v']})*$C$10/(1-{I['lshape_v']})"  # vertical slice already holds v of R1
     whole_flags(req_h, frac_row["rrh"])
     R[f"{frac_col['r1']}{frac_row['rrh']}"] = f"=IF({req_h}>0,1,0)"
     R[f"{P2_COL}{frac_row['rrh']}"] = f"=MAX(0,$C$9-{req_h})"
@@ -555,9 +577,11 @@ def build(path=OUTPUT_PATH):
         R[f"{PARPCT_COL}{rw}"].number_format = "0.0000%"
         R[f"{FVPCT_COL}{rw}"].number_format = "0.0000%"
     R[f"{REG_COL}{frac_row['rrv']}"] = f"={I['ret_pct']}"
-    R[f"{REG_COL}{frac_row['rrh']}"] = f"={frac_col['r1']}{frac_row['rrh']}*($C$9-{P2_COL}{frac_row['rrh']})/$C$10"
+    r1_fv = lambda o: f"{frac_col['r1']}{frac_row[o]}*($C$9-{P2_COL}{frac_row[o]})"  # noqa: E731
+    hz_fv = lambda o, row: "+".join([r1_fv(o)] + [f"{frac_col[k]}{row}*{fvc(k)}" for k in TR])  # noqa: E731
+    R[f"{REG_COL}{frac_row['rrh']}"] = f"=({hz_fv('rrh', frac_row['rrh'])})/$C$10"
     R[f"{REG_COL}{frac_row['rrl']}"] = (
-        f"={I['lshape_v']}+{frac_col['r1']}{frac_row['rrl']}*($C$9-{P2_COL}{frac_row['rrl']})/$C$10")
+        f"={I['lshape_v']}+(1-{I['lshape_v']})*({hz_fv('rrl', hz_row)})/$C$10")
     for o in ("euv", "eufl"):
         R[f"{REG_COL}{frac_row[o]}"] = "n/a"
     for o in OPTS:
@@ -639,8 +663,8 @@ def build(path=OUTPUT_PATH):
     S.cell(14, 1, "Integrity checks (sum of absolute differences, should be 0)").font = BOLD
     checks = (("Pool balance reconciliation", f"=SUMPRODUCT(ABS({P.rng('recon', ROW0 + 1)}))"),
               ("Cash conservation", f"=SUMPRODUCT(ABS({W.rng('cash_chk', ROW0 + 1)}))"),
-              ("Notes P+I plus fees paid above collateral cash plus reserve draw (sum of excesses)",
-               f"=SUMPRODUCT((({W.rng('notes_paid', ROW0 + 1)}+{W.rng('fees_paid', ROW0 + 1)}-{P.rng('cash', ROW0 + 1)}-{W.rng('draw', ROW0 + 1)})>0.005)*({W.rng('notes_paid', ROW0 + 1)}+{W.rng('fees_paid', ROW0 + 1)}-{P.rng('cash', ROW0 + 1)}-{W.rng('draw', ROW0 + 1)}))"),
+              ("Notes P+I plus fees paid above collateral cash plus reserve draw and release (sum of excesses)",
+               f"=SUMPRODUCT((({W.rng('notes_paid', ROW0 + 1)}+{W.rng('fees_paid', ROW0 + 1)}-{P.rng('cash', ROW0 + 1)}-{W.rng('draw', ROW0 + 1)}-{W.rng('release', ROW0 + 1)})>0.005)*({W.rng('notes_paid', ROW0 + 1)}+{W.rng('fees_paid', ROW0 + 1)}-{P.rng('cash', ROW0 + 1)}-{W.rng('draw', ROW0 + 1)}-{W.rng('release', ROW0 + 1)}))"),
               ("Tranche conservation A", "=ABS(K7)"), ("Tranche conservation B", "=ABS(K8)"), ("Tranche conservation C", "=ABS(K9)"),
               ("Months with a trigger breach", f"=SUM({Tt.rng('any', ROW0 + 1)})"),
               ("Excess spread at month 12 (bps annualized)", f"={Tt.x('es_bps', ROW0 + 12)}"),
@@ -713,6 +737,8 @@ def build(path=OUTPUT_PATH):
     for o in OPTS:
         name(f"RETCF_{o.upper()}", RC.rng(f"cf_{o}"))
     name("POOL_END", P.rng("t_end"))
+    name("ARREARS_SWEEP", W.rng("sweep"))
+    name("RESID_CASH", W.rng("resid_cash"))
     name("POOL_CASH", P.rng("cash"))
     name("ES_BPS", Tt.rng("es_bps"))
     for kk in ("scen_sel", "pool_bal", "bal_r", "mode", "oc_a", "oc_b", "oc_c", "ic_a", "ic_b", "ic_c", "res_init",

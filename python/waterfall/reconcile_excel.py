@@ -15,7 +15,7 @@ import numpy as np
 import openpyxl
 
 from . import columns as C
-from .config import (BASE_SCENARIO, EXCEL_PATH, OUTPUT_DIR, SCENARIOS, SOFFICE_CANDIDATES, TRANCHES, Deal)
+from .config import (BASE_SCENARIO, EXCEL_PATH, NOTES, OUTPUT_DIR, SCENARIOS, SOFFICE_CANDIDATES, TRANCHES, Scenario, Deal)
 from .metrics import tranche_cash_flows, tranche_summary
 from .retention import OPTIONS, RET_CLASSES, fair_values, retention_amounts, retention_report, retention_structure
 from .scenarios import breakeven_cdr, class_labels
@@ -26,6 +26,7 @@ TOL_USD = 0.01  # absolute, per cash flow cell and per dollar total
 TOL_RATE = 1e-6  # absolute, for WAL (years) and annualized yields
 TOL_LEVERED = 1e-5  # levered IRR is more sensitive to the IRR solver
 TOL_RATIO = 1e-9  # for fractions retained
+EXTRA_SCENARIOS = (Scenario("Late-default repro", 0.02, 0.18, 0.20, 12), Scenario("Severity 70 CDR 40", 0.10, 0.40, 0.70, 6))
 
 
 def find_soffice():
@@ -115,7 +116,7 @@ def compare(book: Book, deal: Deal, scen, base_fv: dict, locked: bool) -> dict:
     summ = tranche_summary(res)
     worst = {"cash_flow_usd": 0.0, "usd_totals": 0.0, "wal_years": 0.0, "yield": 0.0, "fair_value_usd": 0.0,
              "retention_usd": 0.0, "retention_fractions": 0.0, "retention_rates": 0.0, "levered_irr": 0.0,
-             "unpaid_interest_usd": 0.0}
+             "unpaid_interest_usd": 0.0, "arrears_sweep_usd": 0.0, "residual_cash_usd": 0.0}
     flags_ok = True
     detail = {}
     for x in TRANCHES:
@@ -134,6 +135,9 @@ def compare(book: Book, deal: Deal, scen, base_fv: dict, locked: bool) -> dict:
         detail[x] = {"excel_wal": book.num(f"WAL_{x}"), "py_wal": s["wal_years"],
                      "excel_yield": book.num(f"YIELD_{x}"), "py_yield": s["yield_at_par"],
                      "excel_loss": book.num(f"LOSS_{x}"), "py_loss": s["writedown"]}
+    sweep_py = res[C.ARR_FEE] + sum(res[C.tr(x, C.ARR)] for x in NOTES)
+    worst["arrears_sweep_usd"] = float(np.abs(np.array([_num(v) for v in book.get("ARREARS_SWEEP")][1:]) - sweep_py[1:]).max())
+    worst["residual_cash_usd"] = float(np.abs(np.array([_num(v) for v in book.get("RESID_CASH")][1:]) - res[C.RESID_CASH][1:]).max())
     live_fv = fair_values(res)
     for x in TRANCHES:
         worst["fair_value_usd"] = max(worst["fair_value_usd"], _diff(book.num(f"FVLIVE_{x}"), live_fv[x]))
@@ -175,6 +179,7 @@ def compare(book: Book, deal: Deal, scen, base_fv: dict, locked: bool) -> dict:
           and worst["yield"] < TOL_RATE and worst["retention_usd"] < TOL_USD and worst["fair_value_usd"] < TOL_USD
           and worst["retention_fractions"] < TOL_RATIO and worst["retention_rates"] < TOL_RATE
           and worst["levered_irr"] < TOL_LEVERED and worst["unpaid_interest_usd"] < TOL_USD
+          and worst["arrears_sweep_usd"] < TOL_USD and worst["residual_cash_usd"] < TOL_USD
           and checks["labels_match"] and checks["any_shortfall_flags_match"] and checks["reserve_draw_alloc"] < TOL_USD
           and checks["breach_months_excel"] == checks["breach_months_python"]
           and checks["pool_recon_sum_abs"] < TOL_USD and checks["cash_conservation_sum_abs"] < TOL_USD
@@ -220,6 +225,14 @@ def main(src: Path = EXCEL_PATH) -> dict:
         prepare(src, dst, i, locks=base_fv if scen.name != BASE_SCENARIO.name else None, mode="pro_rata")
         r = compare(Book(src, recalc(dst, work / "recalc")), pro_deal, scen, base_fv, scen.name != BASE_SCENARIO.name)
         r["scenario"] = scen.name + " (pro_rata)"
+        results.append(r)
+        print(r["scenario"], "PASS" if r["passed"] else "FAIL", r["worst_abs_diff"])
+    # extra runs that hit the post-retirement arrears sweep: notes written down or retired while interest is owed
+    for scen in EXTRA_SCENARIOS:
+        dst = work / f"extra_{scen.name.replace(' ', '_')}.xlsx"
+        override = (scen.name, scen.cpr, scen.cdr, scen.severity, scen.lag, scen.rate_shift_bps)
+        prepare(src, dst, 1, locks=base_fv, scen_override=override)
+        r = compare(Book(src, recalc(dst, work / "recalc")), deal, scen, base_fv, True)
         results.append(r)
         print(r["scenario"], "PASS" if r["passed"] else "FAIL", r["worst_abs_diff"])
     probe = breakeven_probe(src, work, deal)

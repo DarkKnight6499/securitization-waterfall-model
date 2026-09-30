@@ -118,7 +118,7 @@ def test_loss_grid_monotone_in_cdr(deal):
     for sev in {r["severity"] for r in rows}:
         seq = [r for r in rows if r["severity"] == sev]
         for x in TRANCHES:
-            # R is checked up to 30% CDR: beyond it write-downs retire the notes early and leftover reserve is released to R
+            # R is checked up to 30% CDR: at 70% severity a larger unspent reserve and smaller note balances give R a little more at 40%
             vals = [r[f"loss_pct_{x}"] for r in seq if x != "R" or r["cdr"] <= 0.30]
             assert all(b >= a - 1e-9 for a, b in zip(vals, vals[1:]))
 

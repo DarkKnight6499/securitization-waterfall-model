@@ -56,7 +56,10 @@ def test_horizontal_reaches_into_whole_junior_notes_when_residual_is_small(deal)
 def test_l_shape_vertical_plus_horizontal_totals_five_percent_on_the_regulatory_measure(deal, fv):
     opt = retention_amounts(deal, fv)["options"][RR_LSHAPED]
     assert opt["regulatory_measure"] == pytest.approx(0.05)  # 246.4(a)(3): vertical percentage plus horizontal FV percentage
-    assert opt["horizontal_fair_value"] == pytest.approx(0.025 * sum(fv.values()))
+    total = sum(fv.values())
+    assert opt["retained_fair_value"] / total == pytest.approx(0.05)  # no double count of the R1 slice
+    assert opt["horizontal_fair_value"] == pytest.approx(0.025 * total)
+    assert opt["fractions"]["R1"] * (fv["R"] - opt["r2_par"]) == pytest.approx(0.025 / 0.975 * total)
     f = opt["fractions"]
     assert all(f[x] >= deal.lshape_vertical - 1e-12 for x in (*NOTES, "R2")) and f["R1"] == 1
 

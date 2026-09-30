@@ -14,7 +14,7 @@ def tranche_cash_flows(res: dict, tranche: str) -> dict:
     deal = res["deal"]
     if tranche == "R":
         interest = res[C.RESID_INT]
-        principal = res[C.RESID_PRIN] + res[C.RES_RELEASE]
+        principal = res[C.RESID_PRIN] + res[C.RES_RELEASE_R]
     else:
         interest = res[C.tr(tranche, C.INT_PAID)]
         principal = res[C.tr(tranche, C.PRIN)]

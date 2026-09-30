@@ -84,3 +84,13 @@ def test_rep_lines_and_scenario_table_match_config(wb):
 def test_excel_recalculation_reconciles_to_python():
     report = reconcile_main(EXCEL_PATH)
     assert report["all_passed"], report
+
+
+def _numeric_literals(ws):
+    return {c.coordinate: c.value for row in ws.iter_rows() for c in row if isinstance(c.value, (int, float))}
+
+
+def test_summary_sheets_hold_only_documented_structural_zeros(wb):
+    # R2 held in non-L options, R2 par in non-carve-out options, and the R row of the note-only columns
+    assert _numeric_literals(wb["Retention"]) == {c: 0 for c in ("F15", "G15", "F16", "F18", "G18", "F19", "G19")}
+    assert _numeric_literals(wb["Scenario_Summary"]) == {c: 0 for c in ("F10", "M10", "N10")}
