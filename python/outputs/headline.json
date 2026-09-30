@@ -1,0 +1,164 @@
+{
+  "pool_balance": 400000000.0,
+  "residual_par": 33000000.0,
+  "base_summary": {
+    "A": {
+      "original_balance": 300000000.0,
+      "interest_paid": 24207652.154798143,
+      "principal_paid": 300000000.0,
+      "writedown": 3.400639773571959e-10,
+      "ending_balance": 0.0,
+      "wal_years": 1.6180314712922812,
+      "yield_at_par": 0.0499581154098796,
+      "discount_margin": 0.011000000000000048,
+      "window_first": 1,
+      "window_last": 42,
+      "loss_pct": 1.133546591190653e-18,
+      "takes_loss": false
+    },
+    "B": {
+      "original_balance": 40000000.0,
+      "interest_paid": 9155019.41012901,
+      "principal_paid": 40000000.0,
+      "writedown": 0.0,
+      "ending_balance": 0.0,
+      "wal_years": 3.8425010352584277,
+      "yield_at_par": 0.05972450892298786,
+      "discount_margin": 0.02250000000000002,
+      "window_first": 42,
+      "window_last": 51,
+      "loss_pct": 0.0,
+      "takes_loss": false
+    },
+    "C": {
+      "original_balance": 30000000.0,
+      "interest_paid": 10375604.463183695,
+      "principal_paid": 29999999.999999993,
+      "writedown": 0.0,
+      "ending_balance": 0.0,
+      "wal_years": 4.611379761414976,
+      "yield_at_par": 0.07499999999999973,
+      "discount_margin": 0.038239421451723266,
+      "window_first": 51,
+      "window_last": 60,
+      "loss_pct": 0.0,
+      "takes_loss": false
+    },
+    "R": {
+      "original_balance": 33000000.0,
+      "interest_paid": 32078091.289146703,
+      "principal_paid": 22098571.46934026,
+      "writedown": 0.0,
+      "ending_balance": 0.0,
+      "wal_years": 5.578722532782236,
+      "yield_at_par": 0.1682950336066642,
+      "discount_margin": 0.1311644660377288,
+      "window_first": 60,
+      "window_last": 90,
+      "loss_pct": 0.0,
+      "takes_loss": false
+    }
+  },
+  "breakeven_cdr": {
+    "0.4": {
+      "A": 0.5225987182191375,
+      "B": 0.26428858593992577,
+      "C": 0.12567554146605747,
+      "R": 0.07478680531382909
+    },
+    "0.6": {
+      "A": 0.3025224357458911,
+      "B": 0.1690357110826653,
+      "C": 0.08582356257741139,
+      "R": 0.051250533305642415
+    }
+  },
+  "fair_values": {
+    "A": 300000000.0000001,
+    "B": 39323034.19638458,
+    "C": 29222855.430614498,
+    "R": 33966140.41588559
+  },
+  "retention": {
+    "RR_VERTICAL": {
+      "fractions": {
+        "A": 0.05,
+        "B": 0.05,
+        "C": 0.05,
+        "R": 0.05
+      },
+      "retained_par": 20150000.0,
+      "retained_fair_value": 20125601.50214424,
+      "par_pct_of_all_interests": 0.05,
+      "fv_pct_of_all_interests": 0.05,
+      "par_pct_of_pool": 0.050375
+    },
+    "RR_HORIZONTAL": {
+      "fractions": {
+        "R": 0.5925195284399083,
+        "C": 0.0,
+        "B": 0.0,
+        "A": 0.0
+      },
+      "retained_par": 19553144.438516974,
+      "retained_fair_value": 20125601.50214424,
+      "par_pct_of_all_interests": 0.048518968830066934,
+      "fv_pct_of_all_interests": 0.05,
+      "par_pct_of_pool": 0.04888286109629244
+    },
+    "RR_LSHAPED": {
+      "fractions": {
+        "A": 0.025,
+        "B": 0.025,
+        "C": 0.025,
+        "R": 0.32125976421995417
+      },
+      "retained_par": 19851572.219258487,
+      "retained_fair_value": 20125601.50214424,
+      "par_pct_of_all_interests": 0.049259484415033465,
+      "fv_pct_of_all_interests": 0.05,
+      "par_pct_of_pool": 0.04962893054814622
+    },
+    "EU_VERTICAL": {
+      "fractions": {
+        "A": 0.05,
+        "B": 0.05,
+        "C": 0.05,
+        "R": 0.05
+      },
+      "retained_par": 20150000.0,
+      "retained_fair_value": 20125601.50214424,
+      "par_pct_of_all_interests": 0.05,
+      "fv_pct_of_all_interests": 0.05,
+      "par_pct_of_pool": 0.050375
+    },
+    "EU_FIRST_LOSS": {
+      "fractions": {
+        "R": 1.0,
+        "C": 0.0,
+        "B": 0.0,
+        "A": 0.0
+      },
+      "retained_par": 33000000.0,
+      "retained_fair_value": 33966140.41588559,
+      "par_pct_of_all_interests": 0.08188585607940446,
+      "fv_pct_of_all_interests": 0.08438540436236587,
+      "par_pct_of_pool": 0.0825
+    }
+  },
+  "retention_extra": {
+    "us_min_horizontal_fair_value": 20125601.50214424,
+    "us_cash_reserve_alternative_amount": 20125601.50214424,
+    "eu_required_nominal_of_pool": 20000000.0,
+    "eu_random_selection_exposures_6_3_c": 20000000.0,
+    "eu_first_loss_exposure_6_3_e": 20000000.0,
+    "total_fair_value": 402512030.04288477,
+    "total_par": 403000000.0
+  },
+  "checks_all_passed": true,
+  "charts": [
+    "D:\\Code\\securitization-waterfall-model\\python\\outputs\\charts\\tranche_balance_paydown.png",
+    "D:\\Code\\securitization-waterfall-model\\python\\outputs\\charts\\cumulative_loss_vs_subordination.png",
+    "D:\\Code\\securitization-waterfall-model\\python\\outputs\\charts\\breakeven_cdr_by_tranche.png"
+  ]
+}

@@ -1,0 +1,474 @@
+{
+  "tolerances": {
+    "usd": 0.01,
+    "rate": 1e-06,
+    "levered_irr": 1e-05,
+    "fraction": 1e-09
+  },
+  "scenarios": [
+    {
+      "scenario": "Base",
+      "worst_abs_diff": {
+        "cash_flow_usd": 2.7939677238464355e-08,
+        "usd_totals": 4.0978193283081055e-08,
+        "wal_years": 4.440892098500626e-15,
+        "yield": 5.991318552389657e-13,
+        "fair_value_usd": 1.1920928955078125e-07,
+        "retention_usd": 4.470348358154297e-08,
+        "retention_fractions": 3.3306690738754696e-16,
+        "retention_rates": 4.093947403305265e-15,
+        "levered_irr": 5.909023270689318e-13
+      },
+      "checks": {
+        "pool_recon_sum_abs": 3.51323145110334e-11,
+        "cash_conservation_sum_abs": 0.0,
+        "notes_over_cash_sum": 0.0,
+        "breach_months_excel": 0.0,
+        "breach_months_python": 0.0
+      },
+      "detail": {
+        "A": {
+          "excel_wal": 1.61803147129228,
+          "py_wal": 1.6180314712922812,
+          "excel_yield": 0.0499581154098808,
+          "py_yield": 0.0499581154098796,
+          "excel_loss": 3.93424041746786e-10,
+          "py_loss": 3.400639773571959e-10
+        },
+        "B": {
+          "excel_wal": 3.84250103525843,
+          "py_wal": 3.8425010352584277,
+          "excel_yield": 0.0597245089229471,
+          "py_yield": 0.05972450892298786,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "C": {
+          "excel_wal": 4.61137976141498,
+          "py_wal": 4.611379761414976,
+          "excel_yield": 0.0749999999994006,
+          "py_yield": 0.07499999999999973,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "R": {
+          "excel_wal": 5.57872253278224,
+          "py_wal": 5.578722532782236,
+          "excel_yield": 0.168295033606663,
+          "py_yield": 0.1682950336066642,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        }
+      },
+      "passed": true
+    },
+    {
+      "scenario": "Mild stress",
+      "worst_abs_diff": {
+        "cash_flow_usd": 4.6566128730773926e-08,
+        "usd_totals": 5.21540641784668e-08,
+        "wal_years": 3.3306690738754696e-15,
+        "yield": 1.0743350653541484e-12,
+        "fair_value_usd": 1.1920928955078125e-07,
+        "retention_usd": 4.470348358154297e-08,
+        "retention_fractions": 3.3306690738754696e-16,
+        "retention_rates": 4.218847493575595e-15,
+        "levered_irr": 6.402430668961401e-15
+      },
+      "checks": {
+        "pool_recon_sum_abs": 4.49660126408654e-12,
+        "cash_conservation_sum_abs": 0.0,
+        "notes_over_cash_sum": 0.0,
+        "breach_months_excel": 0.0,
+        "breach_months_python": 0.0
+      },
+      "detail": {
+        "A": {
+          "excel_wal": 1.62761232912759,
+          "py_wal": 1.6276123291275866,
+          "excel_yield": 0.0499322640962506,
+          "py_yield": 0.04993226409625118,
+          "excel_loss": 3.39646923172351e-10,
+          "py_loss": 2.937841640394325e-10
+        },
+        "B": {
+          "excel_wal": 3.99590305943883,
+          "py_wal": 3.9959030594388287,
+          "excel_yield": 0.059611519605898,
+          "py_yield": 0.05961151960606914,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "C": {
+          "excel_wal": 5.03843566476162,
+          "py_wal": 5.038435664761621,
+          "excel_yield": 0.0749999999989254,
+          "py_yield": 0.07499999999999973,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "R": {
+          "excel_wal": 6.1843806807979,
+          "py_wal": 6.184380680797902,
+          "excel_yield": 0.00578781980677037,
+          "py_yield": 0.005787819806769345,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        }
+      },
+      "passed": true
+    },
+    {
+      "scenario": "Stress",
+      "worst_abs_diff": {
+        "cash_flow_usd": 5.587935447692871e-09,
+        "usd_totals": 7.078051567077637e-08,
+        "wal_years": 2.6645352591003757e-15,
+        "yield": 1.97488553288494e-12,
+        "fair_value_usd": 1.1920928955078125e-07,
+        "retention_usd": 4.470348358154297e-08,
+        "retention_fractions": 3.3306690738754696e-16,
+        "retention_rates": 5.3013149425851225e-15,
+        "levered_irr": 5.874190023291703e-13
+      },
+      "checks": {
+        "pool_recon_sum_abs": 1.09497244235843e-11,
+        "cash_conservation_sum_abs": 1.3790213415632e-10,
+        "notes_over_cash_sum": 0.0,
+        "breach_months_excel": 87.0,
+        "breach_months_python": 87.0
+      },
+      "detail": {
+        "A": {
+          "excel_wal": 1.76243308588987,
+          "py_wal": 1.7624330858898691,
+          "excel_yield": 0.0497661548941433,
+          "py_yield": 0.049766154894143266,
+          "excel_loss": 1.24011657379098e-10,
+          "py_loss": 0.0
+        },
+        "B": {
+          "excel_wal": 4.40756960265467,
+          "py_wal": 4.407569602654667,
+          "excel_yield": 0.0593323466963138,
+          "py_yield": 0.059332346698288685,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "C": {
+          "excel_wal": 5.69255609644918,
+          "py_wal": 5.692556096449178,
+          "excel_yield": -0.0521214109037306,
+          "py_yield": -0.05212141090372957,
+          "excel_loss": 15884876.0158681,
+          "py_loss": 15884876.015868029
+        },
+        "R": {
+          "excel_wal": 7.75,
+          "py_wal": 7.75,
+          "excel_yield": -0.278675628292177,
+          "py_yield": -0.27867562829217607,
+          "excel_loss": 24166168.3753367,
+          "py_loss": 24166168.37533672
+        }
+      },
+      "passed": true
+    },
+    {
+      "scenario": "Severe stress",
+      "worst_abs_diff": {
+        "cash_flow_usd": 8.032657206058502e-09,
+        "usd_totals": 5.960464477539063e-08,
+        "wal_years": 1.7763568394002505e-15,
+        "yield": 5.628830734849544e-13,
+        "fair_value_usd": 2.421438694000244e-08,
+        "retention_usd": 4.470348358154297e-08,
+        "retention_fractions": 3.3306690738754696e-16,
+        "retention_rates": 1.0202949596305189e-13,
+        "levered_irr": 0.0
+      },
+      "checks": {
+        "pool_recon_sum_abs": 3.38438369194831e-12,
+        "cash_conservation_sum_abs": 7.99786903371569e-10,
+        "notes_over_cash_sum": 0.0,
+        "breach_months_excel": 94.0,
+        "breach_months_python": 94.0
+      },
+      "detail": {
+        "A": {
+          "excel_wal": 2.02244067847368,
+          "py_wal": 2.0224406784736813,
+          "excel_yield": 0.0493398072749292,
+          "py_yield": 0.04933980727493159,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "B": {
+          "excel_wal": 5.82374972135113,
+          "py_wal": 5.8237497213511284,
+          "excel_yield": -0.207174202922912,
+          "py_yield": -0.20717420292234912,
+          "excel_loss": 32106467.2682916,
+          "py_loss": 32106467.268291615
+        },
+        "C": {
+          "excel_wal": NaN,
+          "py_wal": NaN,
+          "excel_yield": NaN,
+          "py_yield": NaN,
+          "excel_loss": 30000000.0,
+          "py_loss": 30000000.0
+        },
+        "R": {
+          "excel_wal": 8.0,
+          "py_wal": 8.0,
+          "excel_yield": -0.398434735268539,
+          "py_yield": -0.398434735268437,
+          "excel_loss": 29767251.7196755,
+          "py_loss": 29767251.719675537
+        }
+      },
+      "passed": true
+    },
+    {
+      "scenario": "Fast prepay",
+      "worst_abs_diff": {
+        "cash_flow_usd": 4.6566128730773926e-08,
+        "usd_totals": 5.960464477539063e-08,
+        "wal_years": 3.552713678800501e-15,
+        "yield": 6.166664401341393e-13,
+        "fair_value_usd": 5.587935447692871e-08,
+        "retention_usd": 4.470348358154297e-08,
+        "retention_fractions": 3.3306690738754696e-16,
+        "retention_rates": 1.0547118733938987e-14,
+        "levered_irr": 5.5566662382489085e-14
+      },
+      "checks": {
+        "pool_recon_sum_abs": 8.9467021836609e-12,
+        "cash_conservation_sum_abs": 0.0,
+        "notes_over_cash_sum": 0.0,
+        "breach_months_excel": 0.0,
+        "breach_months_python": 0.0
+      },
+      "detail": {
+        "A": {
+          "excel_wal": 1.00906828562494,
+          "py_wal": 1.0090682856249371,
+          "excel_yield": 0.0509773522876577,
+          "py_yield": 0.05097735228765954,
+          "excel_loss": 1.70107466278891e-10,
+          "py_loss": 0.0
+        },
+        "B": {
+          "excel_wal": 2.73469781559232,
+          "py_wal": 2.7346978155923227,
+          "excel_yield": 0.0606990111209555,
+          "py_yield": 0.060699011121572166,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "C": {
+          "excel_wal": 3.52038567124848,
+          "py_wal": 3.5203856712484836,
+          "excel_yield": 0.0749999999998931,
+          "py_yield": 0.07499999999999973,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "R": {
+          "excel_wal": 4.63762906143991,
+          "py_wal": 4.637629061439909,
+          "excel_yield": 0.132552756779306,
+          "py_yield": 0.13255275677931655,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        }
+      },
+      "passed": true
+    },
+    {
+      "scenario": "Rate shock +300bp",
+      "worst_abs_diff": {
+        "cash_flow_usd": 4.0978193283081055e-08,
+        "usd_totals": 1.1920928955078125e-07,
+        "wal_years": 4.440892098500626e-15,
+        "yield": 2.15411022352896e-13,
+        "fair_value_usd": 5.960464477539063e-08,
+        "retention_usd": 4.470348358154297e-08,
+        "retention_fractions": 3.3306690738754696e-16,
+        "retention_rates": 5.329070518200751e-15,
+        "levered_irr": 3.639926901555235e-14
+      },
+      "checks": {
+        "pool_recon_sum_abs": 4.49660126408654e-12,
+        "cash_conservation_sum_abs": 0.0,
+        "notes_over_cash_sum": 0.0,
+        "breach_months_excel": 15.0,
+        "breach_months_python": 15.0
+      },
+      "detail": {
+        "A": {
+          "excel_wal": 1.53100864129677,
+          "py_wal": 1.5310086412967736,
+          "excel_yield": 0.0801089340984557,
+          "py_yield": 0.08010893409849418,
+          "excel_loss": 3.39646923172351e-10,
+          "py_loss": 2.937841640394325e-10
+        },
+        "B": {
+          "excel_wal": 3.79856879759028,
+          "py_wal": 3.7985687975902835,
+          "excel_yield": 0.0889013321817585,
+          "py_yield": 0.08890133218175711,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "C": {
+          "excel_wal": 4.65929115637471,
+          "py_wal": 4.659291156374715,
+          "excel_yield": 0.0731591074593014,
+          "py_yield": 0.07315910745951681,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "R": {
+          "excel_wal": 5.68800326746384,
+          "py_wal": 5.688003267463839,
+          "excel_yield": -0.108456813803322,
+          "py_yield": -0.10845681380332128,
+          "excel_loss": 15179991.1377927,
+          "py_loss": 15179991.137792744
+        }
+      },
+      "passed": true
+    },
+    {
+      "scenario": "Base (pro_rata)",
+      "worst_abs_diff": {
+        "cash_flow_usd": 5.587935447692871e-09,
+        "usd_totals": 4.842877388000488e-08,
+        "wal_years": 5.329070518200751e-15,
+        "yield": 9.85878045867139e-13,
+        "fair_value_usd": 5.960464477539063e-08,
+        "retention_usd": 4.470348358154297e-08,
+        "retention_fractions": 1.1102230246251565e-16,
+        "retention_rates": 2.8199664825478976e-14,
+        "levered_irr": 5.910966160982412e-13
+      },
+      "checks": {
+        "pool_recon_sum_abs": 3.51323145110334e-11,
+        "cash_conservation_sum_abs": 0.0,
+        "notes_over_cash_sum": 0.0,
+        "breach_months_excel": 0.0,
+        "breach_months_python": 0.0
+      },
+      "detail": {
+        "A": {
+          "excel_wal": 2.10121858281208,
+          "py_wal": 2.1012185828120837,
+          "excel_yield": 0.0492262772327102,
+          "py_yield": 0.049226277232711,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "B": {
+          "excel_wal": 2.10121858281208,
+          "py_wal": 2.1012185828120833,
+          "excel_yield": 0.0607567522191661,
+          "py_yield": 0.06075675222015198,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "C": {
+          "excel_wal": 2.10121858281208,
+          "py_wal": 2.101218582812083,
+          "excel_yield": 0.0749999999999692,
+          "py_yield": 0.07499999999999973,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "R": {
+          "excel_wal": 5.57872253278224,
+          "py_wal": 5.578722532782234,
+          "excel_yield": 0.189926040312555,
+          "py_yield": 0.18992604031255533,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        }
+      },
+      "passed": true
+    },
+    {
+      "scenario": "Stress (pro_rata)",
+      "worst_abs_diff": {
+        "cash_flow_usd": 5.122274160385132e-09,
+        "usd_totals": 7.450580596923828e-08,
+        "wal_years": 7.105427357601002e-15,
+        "yield": 2.8958987985383544e-12,
+        "fair_value_usd": 1.4901161193847656e-08,
+        "retention_usd": 4.6566128730773926e-08,
+        "retention_fractions": 3.3306690738754696e-16,
+        "retention_rates": 5.495603971894525e-15,
+        "levered_irr": 1.050048936690473e-12
+      },
+      "checks": {
+        "pool_recon_sum_abs": 1.09497244235843e-11,
+        "cash_conservation_sum_abs": 1.3790213415632e-10,
+        "notes_over_cash_sum": 0.0,
+        "breach_months_excel": 87.0,
+        "breach_months_python": 87.0
+      },
+      "detail": {
+        "A": {
+          "excel_wal": 1.87213006178374,
+          "py_wal": 1.8721300617837384,
+          "excel_yield": 0.0496487553146199,
+          "py_yield": 0.04964875531462143,
+          "excel_loss": 4.19924164445425e-11,
+          "py_loss": 0.0
+        },
+        "B": {
+          "excel_wal": 4.02644895764711,
+          "py_wal": 4.026448957647111,
+          "excel_yield": 0.0592803039796932,
+          "py_yield": 0.0592803039825891,
+          "excel_loss": 0.0,
+          "py_loss": 0.0
+        },
+        "C": {
+          "excel_wal": 4.35789036041557,
+          "py_wal": 4.3578903604155705,
+          "excel_yield": -0.0680245436335869,
+          "py_yield": -0.06802454363357469,
+          "excel_loss": 15231134.9934949,
+          "py_loss": 15231134.993494825
+        },
+        "R": {
+          "excel_wal": 7.75,
+          "py_wal": 7.749999999999993,
+          "excel_yield": -0.27853015975968,
+          "py_yield": -0.2785301597596803,
+          "excel_loss": 24138361.2635306,
+          "py_loss": 24138361.263530612
+        }
+      },
+      "passed": true
+    }
+  ],
+  "breakeven_probe": {
+    "tranche": "C",
+    "python_breakeven_cdr": 0.12567554146605747,
+    "below": {
+      "cdr": 0.12504716375872718,
+      "excel_loss": 0.0,
+      "python_loss": 0.0
+    },
+    "above": {
+      "cdr": 0.12630391917338774,
+      "excel_loss": 255905.945716912,
+      "python_loss": 255905.94571688995
+    },
+    "passed": true
+  },
+  "all_passed": true
+}
